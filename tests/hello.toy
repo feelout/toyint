@@ -1,0 +1,7 @@
+begin
+C := 0;
+while 5 > C do
+begin
+C := C + 1;
+end;
+end

@@ -5,10 +5,11 @@
 #include "lexer.h"
 #include "ast.h"
 
+LexerState lex;
 Token currentToken;
 
 void FailWithUnexpectedToken(int got, int needed) {
-	fprintf(stderr, "Unexpected token: %d, needed %d\n", got, needed);
+	fprintf(stderr, "Unexpected token: \"%s\", needed \"%s\"\n", tokenName[got], tokenName[needed]);
 	exit(-1);
 }
 
@@ -18,7 +19,7 @@ void FailWithParsingError(char* msg) {
 }
 
 void Advance() {
-	currentToken = GetNextToken();
+	currentToken = GetNextToken(&lex);
 	/*printf("Advance : next token is %d\n", currentToken.type);*/
 }
 
@@ -39,7 +40,6 @@ AST* ParseLogicalExpression();
 AST* ParseOperatorList();
 AST* ParseOperator();
 AST* ParseAssignment();
-AST* ParseCondition();
 AST* ParseWhileCycle();
 AST* ParseIfStatement();
 AST* ParseFunctionCall();
@@ -50,7 +50,7 @@ AST* ParseTerm();
 AST* ParseValue();
 
 AST* ParseFile(char* filename) {
-	StartLexer(filename);
+	StartLexer(&lex, filename);
 	return ParseProgram();
 }
 
@@ -203,7 +203,9 @@ AST* ParseLogicalExpression() {
 			return valueNode;
 	}
 
-	AST* rhs = ParseCondition();	
+	Advance();
+
+	AST* rhs = ParseValue();	
 
 	AddASTChild(lexpNode, valueNode);
 	AddASTChild(lexpNode, rhs);
