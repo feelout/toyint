@@ -11,7 +11,7 @@ enum TokenType {
 	TOKEN_THEN, TOKEN_ELSE,	TOKEN_EOF, TOKEN_CALL				/* 23 - 27 */
 };
 
-char* tokenName[];
+extern char* tokenName[];
 
 #define MAX_ID_NUMBER		255
 #define MAX_TOKEN_SIZE		255
