@@ -5,19 +5,19 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	11
+#define KEYWORD_NUM	13
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
-	"while", "do", "if", "then", "else", "call"};
+	"while", "do", "if", "then", "else", "call", "print", "read"};
 int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
-	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF, 
-	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL};
+	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
+	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_READ};
 
-char* tokenName[TOKEN_CALL+1] = {
+char* tokenName[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
-	"then", "else", "EOF", "call"};
+	"then", "else", "EOF", "call", "print", "read"};
 
 void fail(LexerState *lex, const char *message) {
 	fprintf(stderr, "ERROR : %s at [%d]\n", message, lex->absolute_head_position);

@@ -1,17 +1,26 @@
 #include <stdio.h>
 #include "lexer.h"
 #include "parser.h"
+#include "interpreter.h"
 
 int main(int argc, char *argv[]) {
+	if(argc < 2) {
+		fprintf(stderr, "Error: input file missing\n");
+		return -1;
+	}
 	//Token t;
-	LexerState lex;
-	StartLexer(&lex, "tests/hello.toy");
+	//LexerState lex;
+	//StartLexer(&lex, argv[1]);
 	/*do {
 		t = GetNextToken(&lex);
-		printf("%d\n", t.type);
+		printf("%s\n", tokenName[t.type]);
 	} while(t.type != TOKEN_EOF);*/
-	AST *ast = ParseFile("tests/hello.toy");
+	AST *ast = ParseFile(argv[1]);
 	DumpAST(ast);
+
+	Scope *scope = CreateScope();
+	InterpretAST(ast, scope); 
+
 	printf("\n");
 	return 0;
 }

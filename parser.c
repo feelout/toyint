@@ -28,9 +28,11 @@ int Match(int expectedToken) {
 		FailWithUnexpectedToken(currentToken.type, expectedToken);
 	}
 
+	int value = currentToken.value;
+
 	Advance();
 
-	return currentToken.value;
+	return value;
 }
 
 AST* ParseProgram();
@@ -48,6 +50,7 @@ AST* ParseExpression();
 AST* ParseArithmeticalExpression();
 AST* ParseTerm();
 AST* ParseValue();
+AST* ParsePrint();
 
 AST* ParseFile(char* filename) {
 	StartLexer(&lex, filename);
@@ -82,24 +85,33 @@ AST* ParseOperatorList() {
 	while(currentToken.type != TOKEN_END) {
 		AST *op = ParseOperator();
 		AddASTChild(operators, op);
-		Match(TOKEN_SEMICOLON);
+		//Match(TOKEN_SEMICOLON);
 	}
 
 	return operators;
 }
 
 AST* ParseOperator() {
+	AST* ast;
 	switch(currentToken.type) {
 		case TOKEN_BEGIN:
 			return ParseBlock();
 		case TOKEN_ID:
-			return ParseAssignment();
+			ast = ParseAssignment();
+			Match(TOKEN_SEMICOLON);
+			return ast;
 		case TOKEN_WHILE:
 			return ParseWhileCycle();
 		case TOKEN_IF:
 			return ParseIfStatement();
 		case TOKEN_CALL:
-			return ParseFunctionCall();
+			ast = ParseFunctionCall();
+			Match(TOKEN_SEMICOLON);
+			return ast;
+		case TOKEN_PRINT:
+			ast =  ParsePrint();
+			Match(TOKEN_SEMICOLON);
+			return ast;
 	}
 
 	FailWithUnexpectedToken(currentToken.type, TOKEN_ID);
@@ -122,6 +134,17 @@ AST* ParseAssignment() {
 	AddASTChild(assignment, expr);
 
 	return assignment;
+}
+
+AST* ParsePrint() {
+	Match(TOKEN_PRINT);
+
+	AST* printNode = CreateASTNode(SEM_PRINT, VALUE_EMPTY);
+	AST* exprNode = ParseExpression();
+
+	printNode->child = exprNode;
+
+	return printNode;
 }
 
 AST* ParseWhileCycle() {
@@ -264,10 +287,15 @@ AST* ParseArgumentList() {
 }
 
 AST* ParseExpression() {
-	if(currentToken.type == TOKEN_CALL) {
-		// TODO: Parse function call
-	} else {
-		return ParseArithmeticalExpression();
+	switch(currentToken.type) {
+		case TOKEN_CALL:
+			// TODO: Parse function call
+			break;
+		case TOKEN_READ:
+			Match(TOKEN_READ);
+			return CreateASTNode(SEM_READ, VALUE_EMPTY);
+		default:
+			return ParseArithmeticalExpression();
 	}
 
 	assert(0);
@@ -309,8 +337,8 @@ AST* ParseTerm() {
 		AddASTChild(exprNode, ParseTerm());
 
 		return exprNode;
-	} else if(currentToken.type == TOKEN_MINUS) {
-		Match(TOKEN_MINUS);
+	} else if(currentToken.type == TOKEN_SLASH) {
+		Match(TOKEN_SLASH);
 
 		AST* exprNode = CreateASTNode(SEM_DIVISION, VALUE_EMPTY);
 		AddASTChild(exprNode, valueNode);
@@ -323,13 +351,14 @@ AST* ParseTerm() {
 }
 
 AST* ParseValue() {
+	AST* node;
 	if(currentToken.type == TOKEN_NUMBER) {
+		node =  CreateASTNode(SEM_CONSTANT, currentToken.value);
 		Match(TOKEN_NUMBER);
-
-		return CreateASTNode(SEM_CONSTANT, currentToken.value);
 	} else {
+		node =  CreateASTNode(SEM_ID, currentToken.value);
 		Match(TOKEN_ID);
-
-		return CreateASTNode(SEM_ID, currentToken.value);
 	}
+
+	return node;
 }

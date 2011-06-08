@@ -1,0 +1,5 @@
+begin
+if 1 < 2
+	then print 2;
+	else print 1;
+end

@@ -1,0 +1,4 @@
+begin
+A := read;
+print A;
+end

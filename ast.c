@@ -5,7 +5,7 @@
 char* semanticToString[] = {
 	":=", "id", "const", "+", "-", "*", "/",
 	"while", "if", "call", "and", "or", "not",
-	"<", "=", ">", "<=", ">=", "<>"
+	"<", "=", ">", "<=", ">=", "print", "read", "<>"
 };
 
 AST* CreateASTNode(int semantic, int value) {
@@ -46,7 +46,10 @@ void DumpASTWithIndent(AST *ast, unsigned int indent) {
 		for(i = 0; i < indent; ++i) {
 			printf("\t");
 		}
-		printf("%s\n", semanticToString[node->semantic]);
+		printf("%s", semanticToString[node->semantic]);
+		if(node->semantic == SEM_ID || node->semantic == SEM_CONSTANT)
+			printf("(%d)", ast->value);
+		printf("\n");
 
 		if(node->child) {
 			DumpASTWithIndent(node->child, indent+1);
