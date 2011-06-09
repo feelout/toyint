@@ -8,7 +8,7 @@ char* semanticToString[] = {
 	"<", "=", ">", "<=", ">=", "print", "read", "<>"
 };
 
-AST* CreateASTNode(int semantic, int value) {
+AST* CreateASTNode(int semantic, Value* value) {
 	AST* node = (AST*)malloc(sizeof(AST));
 
 	node->semantic = semantic;
@@ -47,8 +47,11 @@ void DumpASTWithIndent(AST *ast, unsigned int indent) {
 			printf("\t");
 		}
 		printf("%s", semanticToString[node->semantic]);
-		if(node->semantic == SEM_ID || node->semantic == SEM_CONSTANT)
-			printf("(%d)", ast->value);
+		if(node->semantic == SEM_ID || node->semantic == SEM_CONSTANT) {
+			char* value_repr = ValueToString(ast->value);
+			printf("(%s)", value_repr);
+			free(value_repr);
+		}
 		printf("\n");
 
 		if(node->child) {

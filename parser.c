@@ -23,12 +23,12 @@ void Advance() {
 	/*printf("Advance : next token is %d\n", currentToken.type);*/
 }
 
-int Match(int expectedToken) {
+Value* Match(int expectedToken) {
 	if(currentToken.type != expectedToken) {
 		FailWithUnexpectedToken(currentToken.type, expectedToken);
 	}
 
-	int value = currentToken.value;
+	Value* value = currentToken.value;
 
 	Advance();
 
@@ -120,7 +120,7 @@ AST* ParseOperator() {
 }
 
 AST* ParseAssignment() {
-	int id;
+	Value* id;
 
 	id = Match(TOKEN_ID);	
 	Match(TOKEN_ASSIGNMENT);
@@ -262,7 +262,7 @@ AST* ParseIfStatement() {
 AST* ParseFunctionCall() {
 	Match(TOKEN_CALL);
 
-	int funcId = Match(TOKEN_ID);
+	Value* funcId = Match(TOKEN_ID);
 
 	AST* funcNode = CreateASTNode(SEM_FUNCCALL, funcId);
 
@@ -352,7 +352,7 @@ AST* ParseTerm() {
 
 AST* ParseValue() {
 	AST* node;
-	if(currentToken.type == TOKEN_NUMBER) {
+	if(currentToken.type == TOKEN_NUMBER || currentToken.type == TOKEN_STRING) {
 		node =  CreateASTNode(SEM_CONSTANT, currentToken.value);
 		Match(TOKEN_NUMBER);
 	} else {

@@ -1,6 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include "types.h"
+
 enum TokenType {
  	TOKEN_UNKNOWN = 0, TOKEN_BEGIN, TOKEN_END, TOKEN_ID,		/* 0 - 3 */
 	TOKEN_ASSIGNMENT, TOKEN_NUMBER, TOKEN_SEMICOLON,			/* 4 - 6 */
@@ -9,7 +11,7 @@ enum TokenType {
 	TOKEN_MINUS, TOKEN_STAR, TOKEN_SLASH, TOKEN_LEFTBRACKET,	/* 15 - 18 */
 	TOKEN_RIGHTBRACKET, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,		/* 19 - 22 */
 	TOKEN_THEN, TOKEN_ELSE,	TOKEN_EOF, TOKEN_CALL, TOKEN_PRINT,	/* 23 - 28 */
-	TOKEN_READ
+	TOKEN_READ, TOKEN_STRING
 };
 
 extern char* tokenName[];
@@ -19,12 +21,12 @@ extern char* tokenName[];
 #define READ_BUF_SIZE	4096
 
 typedef struct {
-	int	type;
-	int	value; /* For constants - value, for ids - index in id table */
+	int		type;
+	Value*	value; /* For constants - value, for ids - index in id table */
 } Token;
 
 typedef struct {
-	char* id_table[MAX_ID_NUMBER];
+	char* id_names[MAX_ID_NUMBER];
 	int id_count;
 	FILE* stream;
 	char stream_buffer[READ_BUF_SIZE];

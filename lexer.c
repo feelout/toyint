@@ -37,7 +37,7 @@ void StartLexer(LexerState *lex, const char *filename) {
 	lex->head = 0;
 	lex->absolute_head_position = 0;
 
-	memset(lex->id_table, 0, sizeof(char*) * MAX_ID_NUMBER);
+	memset(lex->id_names, 0, sizeof(char*) * MAX_ID_NUMBER);
 	memset(lex->stream_buffer, 0, sizeof(char) * READ_BUF_SIZE);
 	memset(lex->token_buffer, 0, sizeof(char) * MAX_TOKEN_SIZE);
 
@@ -111,6 +111,31 @@ void ReadAlphaNumericTillWS(LexerState *lex) {
 	lex->token_buffer[token_head] = '\0';
 }
 
+// TODO: Unify with previous ASAP
+void ReadStringLiteral(LexerState *lex) {
+	int token_head = 0;
+	char c;
+
+	ClearTokenBuffer(lex);
+
+	c = next_char_and_advance(lex);
+
+	if(c != '\"')
+		failWithInvalidSymbol(lex, '\"', c);
+
+	do {
+		c = next_char(lex);
+		if(c == '\"')
+			break;
+		if(c == '\n')
+			fail(lex, "string literals can't span multiple lines");
+		lex->token_buffer[token_head++] = c;
+		advance_head(lex);
+	} while(token_head < MAX_TOKEN_SIZE-1);
+
+	lex->token_buffer[token_head] = '\0';
+}
+
 int GetKeywordToken(char *s) {
 	int i;	
 	for(i = 0; i < KEYWORD_NUM; ++i) {
@@ -125,14 +150,14 @@ int GetKeywordToken(char *s) {
 int GetIDIndex(LexerState *lex, char *s) {
 	int n;
 	for(n = 0; n < lex->id_count; ++n) {
-		if(strcmp(s, lex->id_table[n]) == 0)
+		if(strcmp(s, lex->id_names[n]) == 0)
 			return n;
 	}
 
 	char *id_name = (char*)malloc(sizeof(char) * (strlen(s) + 1));
 	strcpy(id_name, s);
 
-	lex->id_table[lex->id_count] = id_name;
+	lex->id_names[lex->id_count] = id_name;
 
 	return lex->id_count++;
 }
@@ -143,6 +168,7 @@ Token GetNextToken(LexerState *lex) {
 	SkipWhitespace(lex);
 	char c = next_char(lex);
 	int nvalue;
+	char *string_literal_buffer;
 
 	if(isalpha(c)) { /* ID or keyword */
 		ReadAlphaNumericTillWS(lex);
@@ -154,17 +180,24 @@ Token GetNextToken(LexerState *lex) {
 			nvalue = GetIDIndex(lex, lex->token_buffer);		
 
 			token.type = TOKEN_ID;
-			token.value = nvalue;
+			token.value = CreateIntegralValue(nvalue);
 		} else { /* Keyword */
 			token.type = kwtype;
 		}
-	} else if(isdigit(c)) { /* Constant */
+	} else if(isdigit(c)) { /* Integral constant */
 		ReadAlphaNumericTillWS(lex);
 		
 		nvalue = atoi(lex->token_buffer);
 		
 		token.type = TOKEN_NUMBER;
-		token.value = nvalue;
+		token.value = CreateIntegralValue(nvalue);
+	} else if(c == '\"') {
+		ReadStringLiteral(lex);
+
+		string_literal_buffer = (char*)malloc(sizeof(char) * (strlen(lex->token_buffer) + 1));
+		strcpy(string_literal_buffer, lex->token_buffer);
+		token.type = TOKEN_STRING;
+		token.value = CreateStringValue(string_literal_buffer);
 	} else if(c == ':') {
 		advance_head(lex);
 		c = next_char_and_advance(lex);
