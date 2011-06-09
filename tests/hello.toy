@@ -1,5 +1,6 @@
 begin
 C := 0;
+D := 0;
 while 5 > C do
 begin
 C := C + 1;

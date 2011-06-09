@@ -6,8 +6,8 @@
 	left = InterpretExpression(ast->child, scope); \
 	Typecheck(left, TYPE_INTEGER); \
 	right = InterpretExpression(ast->child->sibling, scope); \
-	Typecheck(left, TYPE_INTEGER); \
-	return CreateIntegralValue((left->v.integral) op (right->v.integral))
+	Typecheck(right, TYPE_INTEGER); \
+	return CreateIntegralValue((left->v.integral) op (right->v.integral)) 
 
 Value* InterpretExpression(AST* ast, Scope* scope) {
 	Value *left, *right, *value;
@@ -65,7 +65,7 @@ void InterpretStatement(AST* ast, Scope* scope) {
 			SetValue(scope, id, value);
 			break;
 		case SEM_WHILE_CYCLE:
-			while(InterpretExpression(ast->child, scope)) {
+			while(InterpretExpression(ast->child, scope)->v.integral) {
 				InterpretStatement(ast->child->sibling, scope);
 			}
 			break;

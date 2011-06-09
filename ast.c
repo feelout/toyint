@@ -48,7 +48,7 @@ void DumpASTWithIndent(AST *ast, unsigned int indent) {
 		}
 		printf("%s", semanticToString[node->semantic]);
 		if(node->semantic == SEM_ID || node->semantic == SEM_CONSTANT) {
-			char* value_repr = ValueToString(ast->value);
+			char* value_repr = ValueToString(node->value);
 			printf("(%s)", value_repr);
 			free(value_repr);
 		}
