@@ -27,7 +27,13 @@ Value* GetValue(Scope *scope, int id) {
 		return scope->ids[id];
 	}
 
-	return scope->parent ? GetValue(scope->parent, id) : NULL;
+	if(scope->parent)
+		return GetValue(scope->parent, id);
+	else {
+		fprintf(stderr, "ID #%d is not initialized\n", id);
+		exit(-1);
+		return NULL;
+	}
 }
 
 void SetValue(Scope *scope, int id, Value* value) {
@@ -37,5 +43,9 @@ void SetValue(Scope *scope, int id, Value* value) {
 		}
 	}
 
+	scope->ids[id] = value;
+}
+
+void SetLocalValue(Scope* scope, int id, Value* value) {
 	scope->ids[id] = value;
 }

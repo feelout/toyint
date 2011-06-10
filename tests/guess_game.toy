@@ -1,0 +1,19 @@
+begin
+	print "Enter your name: ";
+	name := read;
+
+	secret := 72;
+	guessed := 0;
+
+	while not guessed do
+	begin
+		print "Enter your guess : ";	
+		guess := intread;
+		if guess = secret 
+			then guessed := 1;
+			else if guess < secret 
+				then print "Too low";
+				else print "Too high";	
+	end
+	print "Good!";
+end

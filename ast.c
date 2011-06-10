@@ -5,14 +5,14 @@
 char* semanticToString[] = {
 	":=", "id", "const", "+", "-", "*", "/",
 	"while", "if", "call", "and", "or", "not",
-	"<", "=", ">", "<=", ">=", "print", "read", "<>"
+	"<", "=", ">", "<=", ">=", "print", "intread", 
+	"read", "function", "<>"
 };
 
 AST* CreateASTNode(int semantic, Value* value) {
 	AST* node = (AST*)malloc(sizeof(AST));
 
-	node->semantic = semantic;
-	node->value = value;
+	node->semantic = semantic; node->value = value;
 	
 	node->child = NULL;
 	node->sibling = NULL;

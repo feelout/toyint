@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "types.h"
+#include "ast.h"
 
 #define BUFFER_SIZE 256
 
@@ -68,6 +69,17 @@ Value* CreateStringValue(char* string) {
 
 	value->type = TYPE_STRING;
 	value->v.string = string;
+
+	return value;
+}
+
+Value* CreateFunctionValue(int* arguments, int argcount, AST* code) {
+	Value* value = (Value*)malloc(sizeof(Value));
+
+	value->type = TYPE_FUNCTION;
+	value->v.function.argcount = argcount;
+	value->v.function.arguments = arguments;
+	value->v.function.code = code;
 
 	return value;
 }

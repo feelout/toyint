@@ -10,7 +10,6 @@
  */
 
 typedef struct Scope{
-	//int contains[MAX_IDS];
 	Value* ids[MAX_IDS];
 	struct Scope *parent;
 } Scope;
@@ -19,5 +18,6 @@ Scope* CreateScope();
 int ExistsInScope(Scope *scope, int id);
 Value* GetValue(Scope *scope, int id);
 void SetValue(Scope *scope, int id, Value* value);
+void SetLocalValue(Scope *scope, int id, Value* value);
 
 #endif /* SCOPE_H */

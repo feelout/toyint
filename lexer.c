@@ -5,19 +5,22 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	13
+#define KEYWORD_NUM	15
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
-	"while", "do", "if", "then", "else", "call", "print", "read"};
+	"while", "do", "if", "then", "else", "call", "print", "intread", 
+	"read", "function"};
 int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
 	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
-	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_READ};
+	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
+	TOKEN_READ, TOKEN_FUNCTION};
 
 char* tokenName[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
-	"then", "else", "EOF", "call", "print", "read"};
+	"then", "else", "EOF", "call", "print", "intread",
+	"read", "string", "function"};
 
 void fail(LexerState *lex, const char *message) {
 	fprintf(stderr, "ERROR : %s at [%d]\n", message, lex->absolute_head_position);
@@ -125,8 +128,10 @@ void ReadStringLiteral(LexerState *lex) {
 
 	do {
 		c = next_char(lex);
-		if(c == '\"')
+		if(c == '\"') {
+			advance_head(lex);
 			break;
+		}
 		if(c == '\n')
 			fail(lex, "string literals can't span multiple lines");
 		lex->token_buffer[token_head++] = c;
@@ -162,6 +167,7 @@ int GetIDIndex(LexerState *lex, char *s) {
 	return lex->id_count++;
 }
 
+/* XXX: REFACTOR THIS ASAP!!! */
 Token GetNextToken(LexerState *lex) {
 	Token token;
 
@@ -254,6 +260,10 @@ Token GetNextToken(LexerState *lex) {
 		advance_head(lex);
 
 		token.type = TOKEN_RIGHTBRACKET;
+	} else if(c == ',') {
+		advance_head(lex);
+
+		token.type = TOKEN_COMMA;
 	} else if(c == EOF_CHAR) {
 		token.type = TOKEN_EOF;
 	} else {

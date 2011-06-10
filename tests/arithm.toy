@@ -1,6 +1,6 @@
 begin
-x := read;
-y := read;
+x := intread;
+y := intread;
 print x + y;
 print x - y;
 print x * y;

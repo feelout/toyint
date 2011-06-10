@@ -1,0 +1,8 @@
+begin
+	function f (a, b)
+	begin
+		print "f called";
+	end
+	call f (1, 2);
+	call f (3, 4);
+end

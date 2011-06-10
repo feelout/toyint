@@ -51,6 +51,7 @@ AST* ParseArithmeticalExpression();
 AST* ParseTerm();
 AST* ParseValue();
 AST* ParsePrint();
+AST* ParseFunctionDefinition();
 
 AST* ParseFile(char* filename) {
 	StartLexer(&lex, filename);
@@ -104,6 +105,8 @@ AST* ParseOperator() {
 			return ParseWhileCycle();
 		case TOKEN_IF:
 			return ParseIfStatement();
+		case TOKEN_FUNCTION:
+			return ParseFunctionDefinition();
 		case TOKEN_CALL:
 			ast = ParseFunctionCall();
 			Match(TOKEN_SEMICOLON);
@@ -145,6 +148,23 @@ AST* ParsePrint() {
 	printNode->child = exprNode;
 
 	return printNode;
+}
+
+AST* ParseFunctionDefinition() {
+	Match(TOKEN_FUNCTION);
+	Value* name = Match(TOKEN_ID);
+	AST* function = CreateASTNode(SEM_FUNCTION, name);
+
+	Match(TOKEN_LEFTBRACKET);
+	AST* arglist = ParseArgumentList();
+	Match(TOKEN_RIGHTBRACKET);
+
+	AST* code = ParseBlock();
+
+	AddASTChild(function, arglist);
+	AddASTChild(function, code);
+
+	return function;
 }
 
 AST* ParseWhileCycle() {
@@ -278,9 +298,14 @@ AST* ParseFunctionCall() {
 AST* ParseArgumentList() {
 	AST* arglist = CreateASTNode(SEM_EMPTY, VALUE_EMPTY);	
 
+	/* FIXME: At this time, ArgumentList is used both for calling
+	 * and defining functions, which is wrong as it allows using
+	 * constants as formal arguments of a function */
 	while(currentToken.type != TOKEN_RIGHTBRACKET) {
 		AST* argument = ParseValue();
 		AddASTChild(arglist, argument);
+		if(currentToken.type != TOKEN_RIGHTBRACKET)
+			Match(TOKEN_COMMA);
 	}
 
 	return arglist;
@@ -291,6 +316,9 @@ AST* ParseExpression() {
 		case TOKEN_CALL:
 			// TODO: Parse function call
 			break;
+		case TOKEN_INTREAD:
+			Match(TOKEN_INTREAD);
+			return CreateASTNode(SEM_INTREAD, VALUE_EMPTY);
 		case TOKEN_READ:
 			Match(TOKEN_READ);
 			return CreateASTNode(SEM_READ, VALUE_EMPTY);
@@ -354,7 +382,7 @@ AST* ParseValue() {
 	AST* node;
 	if(currentToken.type == TOKEN_NUMBER || currentToken.type == TOKEN_STRING) {
 		node =  CreateASTNode(SEM_CONSTANT, currentToken.value);
-		Match(TOKEN_NUMBER);
+		Match(currentToken.type);
 	} else {
 		node =  CreateASTNode(SEM_ID, currentToken.value);
 		Match(TOKEN_ID);
