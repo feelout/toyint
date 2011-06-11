@@ -12,7 +12,7 @@ enum TokenType {
 	TOKEN_RIGHTBRACKET, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,		/* 19 - 22 */
 	TOKEN_THEN, TOKEN_ELSE,	TOKEN_EOF, TOKEN_CALL, TOKEN_PRINT,	/* 23 - 28 */
 	TOKEN_INTREAD, TOKEN_READ, TOKEN_STRING, TOKEN_FUNCTION,	/* 29 - 32 */
-	TOKEN_COMMA,
+	TOKEN_COMMA, TOKEN_LOCAL,
 };
 
 extern char* tokenName[];
@@ -23,6 +23,7 @@ extern char* tokenName[];
 
 typedef struct {
 	int		type;
+	int		line_num;
 	Value*	value; /* For constants - value, for ids - index in id table */
 } Token;
 
@@ -35,6 +36,7 @@ typedef struct {
 	int head;
 	int absolute_head_position;
 	int buffer_size;
+	int line_num;
 } LexerState;
 
 void StartLexer(LexerState *lex, const char *filename);

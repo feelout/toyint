@@ -96,6 +96,11 @@ void InterpretStatement(AST* ast, Scope* scope) {
 			value = InterpretExpression(ast->child->sibling, scope);
 			SetValue(scope, id, value);
 			break;
+		case SEM_LOCAL_ASSIGNMENT:
+			id = ast->child->value->v.integral;
+			value = InterpretExpression(ast->child->sibling, scope);
+			SetLocalValue(scope, id, value);
+			break;
 		case SEM_WHILE_CYCLE:
 			while(InterpretExpression(ast->child, scope)->v.integral) {
 				InterpretStatement(ast->child->sibling, scope);

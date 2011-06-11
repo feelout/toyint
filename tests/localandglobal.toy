@@ -1,0 +1,21 @@
+begin
+	function func ()
+	begin
+		a := 20;
+		local b := 20;
+	end
+
+	a := 10;
+	b := 15;
+
+	print "Before function call : ";
+	print a;
+	print b;
+
+	call func ();
+
+	print "After function call : ";
+	print a;
+	print b;
+end;
+

@@ -5,22 +5,22 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	15
+#define KEYWORD_NUM	16
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
 	"while", "do", "if", "then", "else", "call", "print", "intread", 
-	"read", "function"};
+	"read", "function", "local"};
 int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
 	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
 	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
-	TOKEN_READ, TOKEN_FUNCTION};
+	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL};
 
 char* tokenName[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
 	"then", "else", "EOF", "call", "print", "intread",
-	"read", "string", "function"};
+	"read", "string", "function", "local"};
 
 void fail(LexerState *lex, const char *message) {
 	fprintf(stderr, "ERROR : %s at [%d]\n", message, lex->absolute_head_position);
@@ -50,6 +50,7 @@ void StartLexer(LexerState *lex, const char *filename) {
 		fail(lex, "Failed to open an input stream");
 	
 	lex->buffer_size = fread(lex->stream_buffer, sizeof(char), READ_BUF_SIZE, lex->stream);	
+	lex->line_num = 0;
 }
 
 /* Get next character in the stream.*/
@@ -87,6 +88,8 @@ void SkipWhitespace(LexerState *lex) {
 	char c;
 
 	while((c = next_char(lex)) && isspace(c)) {
+		if(c == '\n')
+			++lex->line_num;
 		advance_head(lex);
 	}
 }
@@ -172,6 +175,9 @@ Token GetNextToken(LexerState *lex) {
 	Token token;
 
 	SkipWhitespace(lex);
+
+	token.line_num = lex->line_num;
+
 	char c = next_char(lex);
 	int nvalue;
 	char *string_literal_buffer;

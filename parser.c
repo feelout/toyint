@@ -9,7 +9,8 @@ LexerState lex;
 Token currentToken;
 
 void FailWithUnexpectedToken(int got, int needed) {
-	fprintf(stderr, "Unexpected token: \"%s\", needed \"%s\"\n", tokenName[got], tokenName[needed]);
+	fprintf(stderr, "Unexpected token at line %d: \"%s\", needed \"%s\"\n", 
+				currentToken.line_num, tokenName[got], tokenName[needed]);
 	exit(-1);
 }
 
@@ -98,6 +99,7 @@ AST* ParseOperator() {
 		case TOKEN_BEGIN:
 			return ParseBlock();
 		case TOKEN_ID:
+		case TOKEN_LOCAL:
 			ast = ParseAssignment();
 			Match(TOKEN_SEMICOLON);
 			return ast;
@@ -124,6 +126,12 @@ AST* ParseOperator() {
 
 AST* ParseAssignment() {
 	Value* id;
+	int local = 0;
+
+	if(currentToken.type == TOKEN_LOCAL) {
+		local = 1;
+		Match(TOKEN_LOCAL);
+	}
 
 	id = Match(TOKEN_ID);	
 	Match(TOKEN_ASSIGNMENT);
@@ -131,7 +139,7 @@ AST* ParseAssignment() {
 	AST *idNode = CreateASTNode(SEM_ID, id);
 	AST *expr = ParseExpression();
 
-	AST *assignment = CreateASTNode(SEM_ASSIGNMENT, VALUE_EMPTY);
+	AST *assignment = CreateASTNode(local ? SEM_LOCAL_ASSIGNMENT : SEM_ASSIGNMENT, VALUE_EMPTY);
 
 	AddASTChild(assignment, idNode);
 	AddASTChild(assignment, expr);
