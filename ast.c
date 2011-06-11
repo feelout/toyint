@@ -6,7 +6,7 @@ char* semanticToString[] = {
 	":=", "id", "const", "+", "-", "*", "/",
 	"while", "if", "call", "and", "or", "not",
 	"<", "=", ">", "<=", ">=", "print", "intread", 
-	"read", "function", "local :=", "<>"
+	"read", "function", "local :=", "return", "<>"
 };
 
 AST* CreateASTNode(int semantic, Value* value) {

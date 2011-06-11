@@ -5,22 +5,22 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	16
+#define KEYWORD_NUM	17
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
 	"while", "do", "if", "then", "else", "call", "print", "intread", 
-	"read", "function", "local"};
+	"read", "function", "local", "return"};
 int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
 	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
 	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
-	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL};
+	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN};
 
 char* tokenName[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
 	"then", "else", "EOF", "call", "print", "intread",
-	"read", "string", "function", "local"};
+	"read", "string", "function", "local", "return"};
 
 void fail(LexerState *lex, const char *message) {
 	fprintf(stderr, "ERROR : %s at [%d]\n", message, lex->absolute_head_position);
@@ -43,6 +43,9 @@ void StartLexer(LexerState *lex, const char *filename) {
 	memset(lex->id_names, 0, sizeof(char*) * MAX_ID_NUMBER);
 	memset(lex->stream_buffer, 0, sizeof(char) * READ_BUF_SIZE);
 	memset(lex->token_buffer, 0, sizeof(char) * MAX_TOKEN_SIZE);
+
+	lex->id_names[RETURN_VALUE_ID] = "__retvalue__";
+	lex->id_count = 0;
 
 	lex->stream = fopen(filename, "r");
 

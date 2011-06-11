@@ -13,18 +13,37 @@
 	return CreateIntegralValue((left->v.integral) op (right->v.integral)) 
 
 /* TODO: Do not mix coding styles */
-void CallFunction(Value* function_id, Scope* local_scope, Value* arguments[]) {
-	Value* function = GetValue(local_scope, function_id->v.integral);
+Value* CallFunction(AST* ast, Scope* outer_scope) {
+	int arg_num = 0;
+	Value* function = GetValue(outer_scope, ast->value->v.integral);
 	Typecheck(function, TYPE_FUNCTION);
+
+	Scope* local_scope = CreateScope();
+	local_scope->parent = outer_scope;
+
+	Value** arguments = (Value**)malloc(sizeof(Value*) * ast->value->v.function.argcount);
+
+	AST *arg;
+	/* TODO: Check for extra arguments */
+	for(arg = ast->child->child; arg; arg = arg->sibling) {
+		arguments[arg_num++] = arg->value;	
+	}
+
 	/* For each formal argument, set local values from @param arguments */
-	int arg_num;
 	for(arg_num = 0; arg_num < function->v.function.argcount; ++arg_num) {
 		SetLocalValue(local_scope, function->v.function.arguments[arg_num], arguments[arg_num]);
 	}
 
+	SetLocalValue(local_scope, RETURN_VALUE_ID, NULL);
 	InterpretAST(function->v.function.code, local_scope);
 
+	Value* return_value = GetValue(local_scope, RETURN_VALUE_ID);
+
+	free(arguments);
+	free(local_scope);
+
 	/* TODO: Set return value */
+	return return_value; /* TODO: Add new type NONE, as in Python, return it */
 }
 /* NOTE: Return values can be passed in local scope,
  * which will be additionally examined by InterpretExpression
@@ -48,6 +67,8 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 			read_buf = (char*)malloc(sizeof(char) * MAX_READ_STRING_SIZE);
 			scanf("%s", read_buf);
 			return CreateStringValue(read_buf);
+		case SEM_FUNCCALL:
+			return CallFunction(ast, scope);
 		case SEM_ADDITION:
 			PERFORM_OP(+);
 		case SEM_SUBTRACTION:
@@ -87,8 +108,6 @@ void InterpretStatement(AST* ast, Scope* scope) {
 	int* func_args;
 	int arg_num;
 	AST* arg;
-	Scope* local_scope;
-	Value** func_call_args;
 
 	switch(ast->semantic) {
 		case SEM_ASSIGNMENT:
@@ -120,6 +139,9 @@ void InterpretStatement(AST* ast, Scope* scope) {
 			printf("OUTPUT: %s\n", value_repr);
 			free(value_repr);
 			break;
+		case SEM_RETURN:
+			SetLocalValue(scope, RETURN_VALUE_ID, InterpretExpression(ast->child, scope));
+			break;
 		case SEM_FUNCTION:
 			func_args = (int*)malloc(sizeof(int) * MAX_FUNCTION_ARGUMENTS_COUNT);
 			arg_num = 0;
@@ -129,17 +151,7 @@ void InterpretStatement(AST* ast, Scope* scope) {
 			SetLocalValue(scope, ast->value->v.integral, CreateFunctionValue(func_args, arg_num, ast->child->sibling));
 			break;
 		case SEM_FUNCCALL:
-			local_scope = CreateScope();
-			local_scope->parent = scope;
-			/* TODO: Extract to another function */
-			func_call_args = (Value**)malloc(sizeof(Value*) * ast->value->v.function.argcount);
-			arg_num = 0;
-			/* TODO: Check for extra arguments */
-			for(arg = ast->child->child; arg; arg = arg->sibling) {
-				func_call_args[arg_num++] = arg->value;	
-			}
-			CallFunction(ast->value, local_scope, func_call_args);
-			free(func_call_args);
+			CallFunction(ast, scope);
 			break;
 		case SEM_EMPTY:
 			InterpretAST(ast->child, scope);

@@ -53,6 +53,7 @@ AST* ParseTerm();
 AST* ParseValue();
 AST* ParsePrint();
 AST* ParseFunctionDefinition();
+AST* ParseReturn();
 
 AST* ParseFile(char* filename) {
 	StartLexer(&lex, filename);
@@ -109,6 +110,10 @@ AST* ParseOperator() {
 			return ParseIfStatement();
 		case TOKEN_FUNCTION:
 			return ParseFunctionDefinition();
+		case TOKEN_RETURN:
+			ast = ParseReturn();
+			Match(TOKEN_SEMICOLON);
+			return ast;
 		case TOKEN_CALL:
 			ast = ParseFunctionCall();
 			Match(TOKEN_SEMICOLON);
@@ -322,8 +327,7 @@ AST* ParseArgumentList() {
 AST* ParseExpression() {
 	switch(currentToken.type) {
 		case TOKEN_CALL:
-			// TODO: Parse function call
-			break;
+			return ParseFunctionCall();
 		case TOKEN_INTREAD:
 			Match(TOKEN_INTREAD);
 			return CreateASTNode(SEM_INTREAD, VALUE_EMPTY);
@@ -395,6 +399,17 @@ AST* ParseValue() {
 		node =  CreateASTNode(SEM_ID, currentToken.value);
 		Match(TOKEN_ID);
 	}
+
+	return node;
+}
+
+AST* ParseReturn() {
+	Match(TOKEN_RETURN);
+
+	AST* node = CreateASTNode(SEM_RETURN, VALUE_EMPTY);
+	AST* ret_expr = ParseExpression();
+
+	AddASTChild(node, ret_expr);
 
 	return node;
 }

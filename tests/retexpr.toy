@@ -1,0 +1,8 @@
+begin
+	function add(a, b)
+	begin
+		return a + b;
+	end
+
+	print call add(5, 10);
+end

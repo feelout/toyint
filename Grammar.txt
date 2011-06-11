@@ -5,7 +5,7 @@
 <number>	::= 1<number> | 2<number> | 3<number> ... | 9<number> | e
 <block>		::= begin <operatorlist> end
 <operatorlist>	::= <operator><operatorlist> | <operator>;
-<operator>	::= <block> | <assignment>; | <whilecycle> | <ifstatement>  | <funccall>; | <print>; | <funcdef> 
+<operator>	::= <block> | <assignment>; | <whilecycle> | <ifstatement>  | <funccall>; | <print>; | <funcdef> | <return>
 <whilecycle>	::= while <condition> do <operator>
 <ifstatement>	::= if <condition> then <operator> else <operator> | if <condition> then <operator>
 <condition>	::= <logicalexp> | <logicalexp> and <condition> | <logicalexp> or <condition> | not <logicalexp>
@@ -18,3 +18,4 @@
 <print>		::= print <expr>
 <read>		::= read | intread
 <funcdef>	::= function <id> (<farglist>) <block>
+<return>	::= return <expr>

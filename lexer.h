@@ -12,7 +12,7 @@ enum TokenType {
 	TOKEN_RIGHTBRACKET, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,		/* 19 - 22 */
 	TOKEN_THEN, TOKEN_ELSE,	TOKEN_EOF, TOKEN_CALL, TOKEN_PRINT,	/* 23 - 28 */
 	TOKEN_INTREAD, TOKEN_READ, TOKEN_STRING, TOKEN_FUNCTION,	/* 29 - 32 */
-	TOKEN_COMMA, TOKEN_LOCAL,
+	TOKEN_COMMA, TOKEN_LOCAL, TOKEN_RETURN,
 };
 
 extern char* tokenName[];
@@ -20,6 +20,7 @@ extern char* tokenName[];
 #define MAX_ID_NUMBER		255
 #define MAX_TOKEN_SIZE		255
 #define READ_BUF_SIZE	4096
+
 
 typedef struct {
 	int		type;

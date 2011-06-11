@@ -1,0 +1,8 @@
+begin
+	function f ()
+	begin
+		return 1;
+	end
+
+	print call f ();
+end
