@@ -7,6 +7,7 @@
 
 LexerState lex;
 Token currentToken;
+Token nextToken;
 
 void FailWithUnexpectedToken(int got, int needed) {
 	fprintf(stderr, "Unexpected token at line %d: \"%s\", needed \"%s\"\n", 
@@ -20,8 +21,9 @@ void FailWithParsingError(char* msg) {
 }
 
 void Advance() {
-	currentToken = GetNextToken(&lex);
-	/*printf("Advance : next token is %d\n", currentToken.type);*/
+	currentToken = nextToken;
+	if(currentToken.type != TOKEN_EOF)
+		nextToken = GetNextToken(&lex);
 }
 
 Value* Match(int expectedToken) {
@@ -62,6 +64,7 @@ AST* ParseFile(char* filename) {
 }
 
 AST* ParseProgram() {
+	nextToken = GetNextToken(&lex);
 	Advance();
 	return ParseBlock();
 }
@@ -69,15 +72,7 @@ AST* ParseProgram() {
 /* Block does not create new node */
 AST* ParseBlock() {
 	Match(TOKEN_BEGIN);
-
 	AST* oplist = ParseOperatorList();
-
-	if(!oplist) {
-		/* XXX: Delete this, as ParseOperatorList always creates at least
-		 * an empty AST node */
-		FailWithParsingError("expected operator list");
-	}
-
 	Match(TOKEN_END);
 
 	return oplist;
@@ -89,7 +84,6 @@ AST* ParseOperatorList() {
 	while(currentToken.type != TOKEN_END) {
 		AST *op = ParseOperator();
 		AddASTChild(operators, op);
-		//Match(TOKEN_SEMICOLON);
 	}
 
 	return operators;
@@ -214,7 +208,6 @@ AST* ParseWhileCycle() {
 
 /* Without priorities yet */
 AST* ParseCondition() {
-	/* XXX: Add conditions */
 	if(currentToken.type == TOKEN_NOT) {
 		AST* notCond = CreateASTNode(SEM_NOT, VALUE_EMPTY);
 		Match(TOKEN_NOT);
@@ -226,24 +219,17 @@ AST* ParseCondition() {
 		AST* lexp = ParseLogicalExpression();
 		AST* rhs;
 
-		switch(currentToken.type) {
-			/* XXX Refactor */
-			case TOKEN_AND:
-				Match(TOKEN_AND);
-				rhs = ParseCondition();
-				AST *andNode = CreateASTNode(SEM_AND, VALUE_EMPTY);
-				AddASTChild(andNode, lexp);
-				AddASTChild(andNode, rhs);
+		enum TokenType type = currentToken.type;
 
-				return andNode;
-			case TOKEN_OR:
-				Match(TOKEN_OR);
-				rhs = ParseCondition();
-				AST *orNode = CreateASTNode(SEM_OR, VALUE_EMPTY);
-				AddASTChild(orNode, lexp);
-				AddASTChild(orNode, rhs);
+		if(type == TOKEN_AND || type == TOKEN_OR) {
+			Match(type);
+			rhs = ParseCondition();
 
-				return orNode;
+			AST *log_node = CreateASTNode(type == TOKEN_AND ? SEM_AND : SEM_OR, VALUE_EMPTY);
+			AddASTChild(log_node, lexp);
+			AddASTChild(log_node, rhs);
+
+			return log_node;
 		}
 
 		return lexp;
