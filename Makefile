@@ -1,5 +1,10 @@
-toycmp: main.c lexer.c ast.c parser.c lexer.h ast.h parser.h scope.h scope.c interpreter.h interpreter.c types.h types.c
-	gcc -g -o toycmp -Wall main.c lexer.c ast.c parser.c scope.c interpreter.c types.c
+OBJS = main.o lexer.o ast.o parser.o scope.o interpreter.o types.o
+
+toycmp: $(OBJS)
+	gcc -o toycmp $(OBJS)
+
+%.o: $*.c
+	gcc -o $*.o $*.c
 
 clean:
 	rm -rf toycmp *.o
