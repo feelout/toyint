@@ -15,6 +15,11 @@ int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND,
 	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
 	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY};
 
+char symbols[] = {';', '=', '+', '-', '*', '/', '(', ')', '[', ']', ',', EOF_CHAR};
+enum TokenType symbol_token_types[] = {TOKEN_SEMICOLON, TOKEN_EQ, TOKEN_PLUS, TOKEN_MINUS, 
+	TOKEN_STAR, TOKEN_SLASH, TOKEN_LEFTBRACKET, TOKEN_RIGHTBRACKET, 
+	TOKEN_LEFT_SQUARE_BRACKET, TOKEN_RIGHT_SQUARE_BRACKET, TOKEN_COMMA, TOKEN_EOF};
+
 char* tokenName[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
@@ -223,10 +228,6 @@ Token GetNextToken(LexerState *lex) {
 			failWithInvalidSymbol(lex, '=', c);
 
 		token.type = TOKEN_ASSIGNMENT;
-	} else if(c == ';') {
-		advance_head(lex);
-
-		token.type = TOKEN_SEMICOLON;
 	} else if(c == '<') {
 		advance_head(lex);
 		c = next_char_and_advance(lex);
@@ -243,50 +244,21 @@ Token GetNextToken(LexerState *lex) {
 			token.type = TOKEN_GTE;
 		else
 			token.type = TOKEN_GT;
-	} else if(c == '=') {
-		advance_head(lex);
-
-		token.type = TOKEN_EQ;
-	} else if(c == '+') {
-		advance_head(lex);
-
-		token.type = TOKEN_PLUS;
-	} else if(c == '-') {
-		advance_head(lex);
-		
-		token.type = TOKEN_MINUS;
-	} else if(c == '*') {
-		advance_head(lex);
-
-		token.type = TOKEN_STAR;
-	} else if(c == '/') {
-		advance_head(lex);
-
-		token.type = TOKEN_SLASH;
-	} else if(c == '(') {
-		advance_head(lex);
-
-		token.type = TOKEN_LEFTBRACKET;
-	} else if(c == ')') {
-		advance_head(lex);
-
-		token.type = TOKEN_RIGHTBRACKET;
-	} else if(c == '[') {
-		advance_head(lex);
-
-		token.type = TOKEN_LEFT_SQUARE_BRACKET;
-	} else if(c == ']') {
-		advance_head(lex);
-
-		token.type = TOKEN_RIGHT_SQUARE_BRACKET;
-	} else if(c == ',') {
-		advance_head(lex);
-
-		token.type = TOKEN_COMMA;
-	} else if(c == EOF_CHAR) {
-		token.type = TOKEN_EOF;
 	} else {
-		failWithInvalidSymbol(lex, '?', c);
+
+		int i, found = 0;
+		for(i = 0; i < sizeof(symbols) / sizeof(char); ++i) {
+			if(c == symbols[i]) {
+				found = 1;
+				advance_head(lex);
+				token.type = symbol_token_types[i];
+				break;
+			}
+		}
+
+		if(!found) {
+			failWithInvalidSymbol(lex, '?', c);
+		}
 	}
 
 	return token;
