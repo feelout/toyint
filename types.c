@@ -13,8 +13,11 @@ void Typecheck(Value* value, enum Type type) {
 	}
 }
 char* ValueToString(Value* value) {
-	char *buffer, *write_ptr;
-	int ret, ind, left;
+	char *buffer;
+	int ret; 
+
+	/*int ind, left;
+	char *write_ptr */
 
 	buffer = (char*)malloc(sizeof(char) * BUFFER_SIZE);
 
@@ -35,7 +38,7 @@ char* ValueToString(Value* value) {
 			strcpy(buffer, value->v.string);
 			break;
 		case TYPE_ARRAY:
-			left = BUFFER_SIZE-1;
+			/*left = BUFFER_SIZE-1;
 			write_ptr = buffer;
 			for(ind = 0; ind < value->v.array.size; ++ind) {
 				ret = sprintf(write_ptr, "%d ", value->v.array.data[ind]);
@@ -45,7 +48,8 @@ char* ValueToString(Value* value) {
 					exit(-1);
 				}
 				write_ptr += ret;
-			}
+			}*/
+			strcpy(buffer, "[array]");
 			break;
 		default:
 			fprintf(stderr, "Invalid data type : %d\n", value->type);
@@ -80,6 +84,16 @@ Value* CreateFunctionValue(int* arguments, int argcount, AST* code) {
 	value->v.function.argcount = argcount;
 	value->v.function.arguments = arguments;
 	value->v.function.code = code;
+
+	return value;
+}
+
+Value* CreateArrayValue(int size) {
+	Value* value = (Value*)malloc(sizeof(Value));
+
+	value->type = TYPE_ARRAY;
+	value->v.array.size = size;
+	value->v.array.data = (Value**)malloc(sizeof(Value*) * size);
 
 	return value;
 }

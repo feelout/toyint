@@ -12,13 +12,13 @@ enum Type {
 #define MAX_FUNCTION_ARGUMENTS_COUNT	10
 #define RETURN_VALUE_ID	0
 
-typedef struct {
+typedef struct Value {
 	enum Type type;
 	union {
 		int integral;
 		char* string;
 		struct {
-			int *data;
+			struct Value **data;
 			int size;
 		} array;
 		struct {
@@ -34,5 +34,6 @@ char* ValueToString(Value* value);
 Value* CreateIntegralValue(int nvalue);
 Value* CreateStringValue(char* string);
 Value* CreateFunctionValue(int* arguments, int argcount, struct AST* code);
+Value* CreateArrayValue(int size);
 
 #endif // TYPES_H

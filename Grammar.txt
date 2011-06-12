@@ -1,7 +1,9 @@
 <program>	::= <block>
-<assignment>	::= <id> := <expr> | local <id> := <expr>
-<expr>		::= <arithmexp> | <funccall> | <read>
-<value>		::= <number> | <id>
+<assignment>	::= <lvalue> := <expr> | local <id> := <expr>
+<lvalue>	::= <id> | <arrayelem>
+<arrayelem>	::= <id> [ <expr> ]
+<expr>		::= <arithmexp> | <funccall> | <read> | <array>
+<value>		::= <number> | <id> | <arrayelem>
 <number>	::= 1<number> | 2<number> | 3<number> ... | 9<number> | e
 <block>		::= begin <operatorlist> end
 <operatorlist>	::= <operator><operatorlist> | <operator>;
@@ -19,3 +21,4 @@
 <read>		::= read | intread
 <funcdef>	::= function <id> (<farglist>) <block>
 <return>	::= return <expr>
+<array>		::=	array [ <number> ]

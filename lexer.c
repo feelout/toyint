@@ -5,22 +5,24 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	17
+#define KEYWORD_NUM	18
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
 	"while", "do", "if", "then", "else", "call", "print", "intread", 
-	"read", "function", "local", "return"};
+	"read", "function", "local", "return", "array"};
 int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
 	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
 	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
-	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN};
+	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY};
 
 char* tokenName[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
 	"then", "else", "EOF", "call", "print", "intread",
-	"read", "string", "function", "local", "return"};
+	"read", "string", "function", ",", "local", "return",
+	"array", "[", "]",
+};
 
 void fail(LexerState *lex, const char *message) {
 	fprintf(stderr, "ERROR : %s at [%d]\n", message, lex->absolute_head_position);
@@ -269,6 +271,14 @@ Token GetNextToken(LexerState *lex) {
 		advance_head(lex);
 
 		token.type = TOKEN_RIGHTBRACKET;
+	} else if(c == '[') {
+		advance_head(lex);
+
+		token.type = TOKEN_LEFT_SQUARE_BRACKET;
+	} else if(c == ']') {
+		advance_head(lex);
+
+		token.type = TOKEN_RIGHT_SQUARE_BRACKET;
 	} else if(c == ',') {
 		advance_head(lex);
 

@@ -8,13 +8,14 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Error: input file missing\n");
 		return -1;
 	}
-	//Token t;
-	//LexerState lex;
-	//StartLexer(&lex, argv[1]);
-	/*do {
+	/*Token t;
+	LexerState lex;
+	StartLexer(&lex, argv[1]);
+	do {
 		t = GetNextToken(&lex);
 		printf("%s\n", tokenName[t.type]);
 	} while(t.type != TOKEN_EOF);*/
+
 	AST *ast = ParseFile(argv[1]);
 	DumpAST(ast);
 

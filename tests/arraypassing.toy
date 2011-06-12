@@ -1,0 +1,20 @@
+begin
+	function sum(xs, size)
+	begin
+		local s := 0;
+		local i := 0;
+		while i < size do
+		begin
+			s := s + xs[i];
+			i := i + 1;
+		end
+		return s;
+	end
+
+	ys := array[3];
+	ys[0] := 10;
+	ys[1] := 15;
+	ys[2] := 20;
+
+	print call sum(ys, 3);
+end

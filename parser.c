@@ -54,6 +54,7 @@ AST* ParseValue();
 AST* ParsePrint();
 AST* ParseFunctionDefinition();
 AST* ParseReturn();
+AST* ParseArray();
 
 AST* ParseFile(char* filename) {
 	StartLexer(&lex, filename);
@@ -131,7 +132,8 @@ AST* ParseOperator() {
 
 AST* ParseAssignment() {
 	Value* id;
-	int local = 0;
+	int local = 0, array = 0;
+	AST *indexExpr;
 
 	if(currentToken.type == TOKEN_LOCAL) {
 		local = 1;
@@ -139,14 +141,27 @@ AST* ParseAssignment() {
 	}
 
 	id = Match(TOKEN_ID);	
+	if(currentToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
+		array = 1;
+		Match(TOKEN_LEFT_SQUARE_BRACKET);
+		indexExpr = ParseExpression();
+		Match(TOKEN_RIGHT_SQUARE_BRACKET);
+	}
+
 	Match(TOKEN_ASSIGNMENT);
 
-	AST *idNode = CreateASTNode(SEM_ID, id);
+	AST *lvalueNode;
+
+	if(array) {
+		lvalueNode = CreateASTNode(SEM_INDEX, id);
+		AddASTChild(lvalueNode, indexExpr);
+	} else
+		lvalueNode = CreateASTNode(SEM_ID, id);
 	AST *expr = ParseExpression();
 
 	AST *assignment = CreateASTNode(local ? SEM_LOCAL_ASSIGNMENT : SEM_ASSIGNMENT, VALUE_EMPTY);
 
-	AddASTChild(assignment, idNode);
+	AddASTChild(assignment, lvalueNode);
 	AddASTChild(assignment, expr);
 
 	return assignment;
@@ -334,6 +349,8 @@ AST* ParseExpression() {
 		case TOKEN_READ:
 			Match(TOKEN_READ);
 			return CreateASTNode(SEM_READ, VALUE_EMPTY);
+		case TOKEN_ARRAY:
+			return ParseArray();
 		default:
 			return ParseArithmeticalExpression();
 	}
@@ -396,8 +413,19 @@ AST* ParseValue() {
 		node =  CreateASTNode(SEM_CONSTANT, currentToken.value);
 		Match(currentToken.type);
 	} else {
-		node =  CreateASTNode(SEM_ID, currentToken.value);
-		Match(TOKEN_ID);
+		Value *id = Match(TOKEN_ID);
+
+		/* XXX: Factor this out */
+		if(currentToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
+			Match(TOKEN_LEFT_SQUARE_BRACKET);
+			AST* size = ParseExpression();
+			Match(TOKEN_RIGHT_SQUARE_BRACKET);
+
+			node = CreateASTNode(SEM_INDEX,  id);
+			AddASTChild(node, size);
+		} else {
+			node =  CreateASTNode(SEM_ID, id);
+		}
 	}
 
 	return node;
@@ -412,4 +440,15 @@ AST* ParseReturn() {
 	AddASTChild(node, ret_expr);
 
 	return node;
+}
+
+AST* ParseArray() {
+	Match(TOKEN_ARRAY);
+	Match(TOKEN_LEFT_SQUARE_BRACKET);
+
+	Value* size = Match(TOKEN_NUMBER);
+
+	Match(TOKEN_RIGHT_SQUARE_BRACKET);
+
+	return CreateASTNode(SEM_ARRAY, size);
 }
