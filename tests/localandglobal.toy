@@ -12,7 +12,7 @@ begin
 	print a;
 	print b;
 
-	call func ();
+	func();
 
 	print "After function call : ";
 	print a;

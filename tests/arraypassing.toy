@@ -16,5 +16,5 @@ begin
 	ys[1] := 15;
 	ys[2] := 20;
 
-	print call sum(ys, 3);
+	print sum(ys, 3);
 end

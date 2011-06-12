@@ -15,7 +15,7 @@
 <cmp>		::= < | = | > | <= | >=
 <arithmexp>	::= <term> | <term> + <arithmexp> | <term> - <arithmexp>
 <term>		::= <value> | <value> * <term> | <value> / <term>
-<funccall>	::= call <id> (<farglist>)
+<funccall>	::= <id> (<farglist>)
 <farglist>	::= <value> , <farglist> | <value> | e
 <print>		::= print <expr>
 <read>		::= read | intread

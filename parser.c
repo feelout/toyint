@@ -95,6 +95,9 @@ AST* ParseOperator() {
 		case TOKEN_BEGIN:
 			return ParseBlock();
 		case TOKEN_ID:
+			ast = nextToken.type == TOKEN_LEFTBRACKET ? ParseFunctionCall() : ParseAssignment();
+			Match(TOKEN_SEMICOLON);
+			return ast;
 		case TOKEN_LOCAL:
 			ast = ParseAssignment();
 			Match(TOKEN_SEMICOLON);
@@ -107,10 +110,6 @@ AST* ParseOperator() {
 			return ParseFunctionDefinition();
 		case TOKEN_RETURN:
 			ast = ParseReturn();
-			Match(TOKEN_SEMICOLON);
-			return ast;
-		case TOKEN_CALL:
-			ast = ParseFunctionCall();
 			Match(TOKEN_SEMICOLON);
 			return ast;
 		case TOKEN_PRINT:
@@ -294,8 +293,6 @@ AST* ParseIfStatement() {
 }
 
 AST* ParseFunctionCall() {
-	Match(TOKEN_CALL);
-
 	Value* funcId = Match(TOKEN_ID);
 
 	AST* funcNode = CreateASTNode(SEM_FUNCCALL, funcId);
@@ -327,8 +324,6 @@ AST* ParseArgumentList() {
 
 AST* ParseExpression() {
 	switch(currentToken.type) {
-		case TOKEN_CALL:
-			return ParseFunctionCall();
 		case TOKEN_INTREAD:
 			Match(TOKEN_INTREAD);
 			return CreateASTNode(SEM_INTREAD, VALUE_EMPTY);
@@ -399,6 +394,9 @@ AST* ParseValue() {
 		node =  CreateASTNode(SEM_CONSTANT, currentToken.value);
 		Match(currentToken.type);
 	} else {
+		if(nextToken.type == TOKEN_LEFTBRACKET)
+			return ParseFunctionCall();
+
 		Value *id = Match(TOKEN_ID);
 
 		/* XXX: Factor this out */

@@ -4,5 +4,5 @@ begin
 		return a + b;
 	end
 
-	print call add(5, 10);
+	print add(5, 10);
 end

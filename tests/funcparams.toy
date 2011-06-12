@@ -5,6 +5,6 @@ begin
 		print a;
 		print b;
 	end
-	call f (1, 2);
-	call f (3, 4);
+	f(1, 2);
+	f(3, 4);
 end
