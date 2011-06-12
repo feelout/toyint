@@ -20,7 +20,7 @@ enum TokenType symbol_token_types[] = {TOKEN_SEMICOLON, TOKEN_EQ, TOKEN_PLUS, TO
 	TOKEN_STAR, TOKEN_SLASH, TOKEN_LEFTBRACKET, TOKEN_RIGHTBRACKET, 
 	TOKEN_LEFT_SQUARE_BRACKET, TOKEN_RIGHT_SQUARE_BRACKET, TOKEN_COMMA, TOKEN_EOF};
 
-char* tokenName[] = {
+char* token_name[] = {
 	"unknown", "begin", "end", "id", ":=", "const",
 	";", "and", "or", "not", "<", "=", ">", "<=", "=>",
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
@@ -29,12 +29,14 @@ char* tokenName[] = {
 	"array", "[", "]",
 };
 
+/* Fails with given message */
 void fail(LexerState *lex, const char *message) {
 	fprintf(stderr, "ERROR : %s at [%d]\n", message, lex->absolute_head_position);
 	StopLexer(lex);
 	exit(-1);
 }
 
+/* Fails in case of unexpected symbol (? is used in case of ambiguity) */
 void failWithInvalidSymbol(LexerState *lex, char expected, char got) {
 	fprintf(stderr, "ERROR : Expected symbol \'%c\', got \'%c\' at [%d]\n",
 			expected, got, lex->absolute_head_position);
@@ -42,6 +44,7 @@ void failWithInvalidSymbol(LexerState *lex, char expected, char got) {
 	exit(-1);
 }
 
+/* Starts lexer on given source file */
 void StartLexer(LexerState *lex, const char *filename) {
 	lex->stream = NULL;
 	lex->head = 0;
@@ -64,13 +67,13 @@ void StartLexer(LexerState *lex, const char *filename) {
 }
 
 /* Get next character in the stream.*/
-char next_char(LexerState *lex) {
+char NextChar(LexerState *lex) {
 	return lex->stream_buffer[lex->head];
 }
 
-/* Same as next_char, but advances head */
-char next_char_and_advance(LexerState *lex) {
-	char c = next_char(lex);
+/* Same as NextChar, but advances head */
+char NextCharAndAdvance(LexerState *lex) {
+	char c = NextChar(lex);
 
 	if(lex->head == lex->buffer_size) {
 		if(feof(lex->stream)) {
@@ -87,7 +90,7 @@ char next_char_and_advance(LexerState *lex) {
 }
 
 /* Advances stream head */
-void advance_head(LexerState *lex) {
+void AdvanceHead(LexerState *lex) {
 	++lex->head;
 	++lex->absolute_head_position;
 }
@@ -97,64 +100,63 @@ void advance_head(LexerState *lex) {
 void SkipWhitespace(LexerState *lex) {
 	char c;
 
-	while((c = next_char(lex)) && isspace(c)) {
+	while((c = NextChar(lex)) && isspace(c)) {
 		if(c == '\n')
 			++lex->line_num;
-		advance_head(lex);
+		AdvanceHead(lex);
 	}
 }
 
+/* Empties lexer's token buffer */
 void ClearTokenBuffer(LexerState *lex) {
 	memset(lex->token_buffer, sizeof(char*) * MAX_TOKEN_SIZE, '\0');
 }
 
-/* Reads alphanumeric characters from stream into token_buffer */
-void ReadAlphaNumericTillWS(LexerState *lex) {
+/* Reads symbols while they satisfy given predicate. After exection,
+ * lexer head points to the first non-satisfying symbol */
+void ReadSymbols(LexerState *lex, int (*allowed_tester)(char)) {
 	int token_head = 0;
 	char c;
 
 	ClearTokenBuffer(lex);
 
 	do {
-		c = next_char(lex);
-		if(!isalnum(c)) {
+		c = NextChar(lex);
+		if(!allowed_tester(c)) {
 			break;
 		}
 		lex->token_buffer[token_head++] = c;
-		advance_head(lex);
+		AdvanceHead(lex);
 	} while(token_head < MAX_TOKEN_SIZE-1);
 
 	lex->token_buffer[token_head] = '\0';
 }
 
-// TODO: Unify with previous ASAP
+/* Checks if char is valid id symbol (though currently
+ * all ids must start with an alpha */
+int IsIDSymbol(char c) {
+	return isalnum(c) || c == '_';
+}
+
+/* Reads identifier */
+void ReadIDSymbolsTillWS(LexerState *lex) {
+	ReadSymbols(lex, IsIDSymbol);
+}
+
+/* Predicate, which fails only for string literals' delimiters */
+int IsNotStringEnd(char c) {
+	/* Allow line-spanning constants for now */
+	return c != '\"';
+}
+
+/* Reads string literal (head must point to the first non-delimiting symbol */
 void ReadStringLiteral(LexerState *lex) {
-	int token_head = 0;
-	char c;
-
-	ClearTokenBuffer(lex);
-
-	c = next_char_and_advance(lex);
-
-	if(c != '\"')
-		failWithInvalidSymbol(lex, '\"', c);
-
-	do {
-		c = next_char(lex);
-		if(c == '\"') {
-			advance_head(lex);
-			break;
-		}
-		if(c == '\n')
-			fail(lex, "string literals can't span multiple lines");
-		lex->token_buffer[token_head++] = c;
-		advance_head(lex);
-	} while(token_head < MAX_TOKEN_SIZE-1);
-
-	lex->token_buffer[token_head] = '\0';
+	ReadSymbols(lex, IsNotStringEnd);
 }
 
-int GetKeywordToken(char *s) {
+/* Returns keyword token type if the string is reserved keyword.
+ * Otherwise, returns TOKEN_UNKNOWN */
+enum TokenType GetKeywordToken(char *s) {
 	int i;	
 	for(i = 0; i < KEYWORD_NUM; ++i) {
 		if(strcmp(keywords[i], s) == 0) {
@@ -165,6 +167,8 @@ int GetKeywordToken(char *s) {
 	return TOKEN_UNKNOWN;
 }
 
+/* Takes id name and returns it's number in id table, adding
+ * it there if necessary */
 int GetIDIndex(LexerState *lex, char *s) {
 	int n;
 	for(n = 0; n < lex->id_count; ++n) {
@@ -180,7 +184,7 @@ int GetIDIndex(LexerState *lex, char *s) {
 	return lex->id_count++;
 }
 
-/* XXX: REFACTOR THIS ASAP!!! */
+/* Yields next token */
 Token GetNextToken(LexerState *lex) {
 	Token token;
 
@@ -188,13 +192,12 @@ Token GetNextToken(LexerState *lex) {
 
 	token.line_num = lex->line_num;
 
-	char c = next_char(lex);
+	char c = NextChar(lex);
 	int nvalue;
 	char *string_literal_buffer;
 
 	if(isalpha(c)) { /* ID or keyword */
-		ReadAlphaNumericTillWS(lex);
-		/* TODO: If ID, add to symbol table, return ID token*/
+		ReadIDSymbolsTillWS(lex);
 
 		int kwtype = GetKeywordToken(lex->token_buffer);
 
@@ -207,38 +210,42 @@ Token GetNextToken(LexerState *lex) {
 			token.type = kwtype;
 		}
 	} else if(isdigit(c)) { /* Integral constant */
-		ReadAlphaNumericTillWS(lex);
+		ReadIDSymbolsTillWS(lex);
 		
 		nvalue = atoi(lex->token_buffer);
 		
 		token.type = TOKEN_NUMBER;
 		token.value = CreateIntegralValue(nvalue);
 	} else if(c == '\"') {
+		AdvanceHead(lex); /* Beginning quotes */
+
 		ReadStringLiteral(lex);
 
 		string_literal_buffer = (char*)malloc(sizeof(char) * (strlen(lex->token_buffer) + 1));
 		strcpy(string_literal_buffer, lex->token_buffer);
 		token.type = TOKEN_STRING;
 		token.value = CreateStringValue(string_literal_buffer);
+
+		AdvanceHead(lex); /* Ending quotes */
 	} else if(c == ':') {
-		advance_head(lex);
-		c = next_char_and_advance(lex);
+		AdvanceHead(lex);
+		c = NextCharAndAdvance(lex);
 
 		if(c != '=')
 			failWithInvalidSymbol(lex, '=', c);
 
 		token.type = TOKEN_ASSIGNMENT;
 	} else if(c == '<') {
-		advance_head(lex);
-		c = next_char_and_advance(lex);
+		AdvanceHead(lex);
+		c = NextCharAndAdvance(lex);
 
 		if(c == '=')
 			token.type = TOKEN_LTE;
 		else
 			token.type = TOKEN_LT;
 	} else if(c == '>') {
-		advance_head(lex);
-		c = next_char_and_advance(lex);
+		AdvanceHead(lex);
+		c = NextCharAndAdvance(lex);
 
 		if(c == '=')
 			token.type = TOKEN_GTE;
@@ -250,7 +257,7 @@ Token GetNextToken(LexerState *lex) {
 		for(i = 0; i < sizeof(symbols) / sizeof(char); ++i) {
 			if(c == symbols[i]) {
 				found = 1;
-				advance_head(lex);
+				AdvanceHead(lex);
 				token.type = symbol_token_types[i];
 				break;
 			}
@@ -264,6 +271,7 @@ Token GetNextToken(LexerState *lex) {
 	return token;
 }
 
+/* Stops the lexer */
 void StopLexer(LexerState *lex) {
 	fclose(lex->stream);
 }

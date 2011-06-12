@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	StartLexer(&lex, argv[1]);
 	do {
 		t = GetNextToken(&lex);
-		printf("%s\n", tokenName[t.type]);
+		printf("%s\n", token_name[t.type]);
 	} while(t.type != TOKEN_EOF);*/
 
 	AST *ast = ParseFile(argv[1]);

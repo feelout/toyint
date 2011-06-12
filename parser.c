@@ -10,7 +10,7 @@ Token currentToken;
 
 void FailWithUnexpectedToken(int got, int needed) {
 	fprintf(stderr, "Unexpected token at line %d: \"%s\", needed \"%s\"\n", 
-				currentToken.line_num, tokenName[got], tokenName[needed]);
+				currentToken.line_num, token_name[got], token_name[needed]);
 	exit(-1);
 }
 

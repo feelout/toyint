@@ -16,7 +16,7 @@ enum TokenType {
 	TOKEN_LEFT_SQUARE_BRACKET, TOKEN_RIGHT_SQUARE_BRACKET,		/* 37 - 38 */
 };
 
-extern char* tokenName[];
+extern char* token_name[];
 
 #define MAX_ID_NUMBER		255
 #define MAX_TOKEN_SIZE		255
