@@ -99,10 +99,15 @@ void AdvanceHead(LexerState *lex) {
  * non-whitespace character */
 void SkipWhitespace(LexerState *lex) {
 	char c;
+	int comment =0 ;
 
-	while((c = NextChar(lex)) && isspace(c)) {
-		if(c == '\n')
+	while((c = NextChar(lex)) && (isspace(c) || c == COMMENT_CHAR || comment)) {
+		if(c == COMMENT_CHAR)
+			comment = 1;
+		if(c == '\n') {
 			++lex->line_num;
+			comment = 0;
+		}
 		AdvanceHead(lex);
 	}
 }
@@ -193,6 +198,9 @@ Token GetNextToken(LexerState *lex) {
 	token.line_num = lex->line_num;
 
 	char c = NextChar(lex);
+
+	SkipWhitespace(lex);
+
 	int nvalue;
 	char *string_literal_buffer;
 

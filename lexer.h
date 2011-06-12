@@ -21,6 +21,7 @@ extern char* token_name[];
 #define MAX_ID_NUMBER		255
 #define MAX_TOKEN_SIZE		255
 #define READ_BUF_SIZE	4096
+#define COMMENT_CHAR	'#'
 
 
 typedef struct {
