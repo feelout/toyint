@@ -68,7 +68,7 @@ Value** ResolveIndex(AST* ast, Scope* scope) {
 	Typecheck(array, TYPE_ARRAY);
 
 	if(index->v.integral >= array->v.array.size) {
-		fprintf(stderr, "Array index out of bounds : %d out of %d", index->v.integral,
+		fprintf(stderr, "Array index out of bounds : %d out of %d\n", index->v.integral,
 				array->v.array.size);
 		exit(-1);
 	}

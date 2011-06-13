@@ -27,7 +27,15 @@ typedef struct Value {
 			struct AST* code;
 		} function;
 	} v;
+	struct KeyValue** fields;
+	int fields_table_size;
+	int fields_num;
 } Value;
+
+typedef struct KeyValue {
+	const char* key;
+	Value* value;
+} KeyValue;
 
 void Typecheck(Value* value, enum Type type);
 char* ValueToString(Value* value);
@@ -35,5 +43,10 @@ Value* CreateIntegralValue(int nvalue);
 Value* CreateStringValue(char* string);
 Value* CreateFunctionValue(int* arguments, int argcount, struct AST* code);
 Value* CreateArrayValue(int size);
+
+int HashString(const char* str, int table_size);
+
+void SetField(Value* value, const char* field_key, Value* field_value);
+Value* GetField(Value* value, const char* field_key);
 
 #endif // TYPES_H

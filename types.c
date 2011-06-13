@@ -5,6 +5,7 @@
 #include "ast.h"
 
 #define BUFFER_SIZE 256
+#define FIELDS_TABLE_INITIAL_SIZE	20
 
 void Typecheck(Value* value, enum Type type) {
 	if(value->type != type) {
@@ -59,8 +60,20 @@ char* ValueToString(Value* value) {
 	return buffer;
 }
 
-Value* CreateIntegralValue(int nvalue) {
+Value* CreateValue() {
 	Value* value = (Value*)malloc(sizeof(Value));
+
+	value->fields = (KeyValue**)malloc(sizeof(KeyValue*) * FIELDS_TABLE_INITIAL_SIZE);
+	value->fields_table_size = FIELDS_TABLE_INITIAL_SIZE;
+	value->fields_num = 0;
+
+	memset(value->fields, 0, sizeof(KeyValue*) * FIELDS_TABLE_INITIAL_SIZE);
+
+	return value;
+}
+
+Value* CreateIntegralValue(int nvalue) {
+	Value* value = CreateValue();
 
 	value->type = TYPE_INTEGER;
 	value->v.integral = nvalue;
@@ -69,7 +82,7 @@ Value* CreateIntegralValue(int nvalue) {
 }
 
 Value* CreateStringValue(char* string) {
-	Value* value = (Value*)malloc(sizeof(Value));
+	Value* value = CreateValue();
 
 	value->type = TYPE_STRING;
 	value->v.string = string;
@@ -78,7 +91,7 @@ Value* CreateStringValue(char* string) {
 }
 
 Value* CreateFunctionValue(int* arguments, int argcount, AST* code) {
-	Value* value = (Value*)malloc(sizeof(Value));
+	Value* value = CreateValue();
 
 	value->type = TYPE_FUNCTION;
 	value->v.function.argcount = argcount;
@@ -89,11 +102,58 @@ Value* CreateFunctionValue(int* arguments, int argcount, AST* code) {
 }
 
 Value* CreateArrayValue(int size) {
-	Value* value = (Value*)malloc(sizeof(Value));
+	Value* value = CreateValue();
 
 	value->type = TYPE_ARRAY;
 	value->v.array.size = size;
 	value->v.array.data = (Value**)malloc(sizeof(Value*) * size);
 
 	return value;
+}
+
+int HashString(const char* str, int table_size) {
+	int len = strlen(str);
+	int hash = 0;
+	int i;
+	for(i = 0; i < len; ++i) {
+		hash = (hash * 31 + str[i]) % table_size;
+	}
+
+	return hash;
+}
+
+int GetFieldIndex(Value* value, const char* field_key) {
+	/* TODO: Check for load factor and free space */
+	int hash = HashString(field_key, value->fields_table_size);
+
+	int index = hash;
+	while(value->fields[index] && strcmp(value->fields[index]->key, field_key) != 0) {
+		++index;
+		if(index >= value->fields_table_size)
+			index = 0;
+	}
+
+	return index;
+}
+
+void SetField(Value* value, const char* field_key, Value* field_value) {
+	int index = GetFieldIndex(value, field_key);
+
+	KeyValue* entry = (KeyValue*)malloc(sizeof(KeyValue));
+	entry->key = field_key;
+	entry->value = field_value;
+
+	if(!value->fields[index])
+		++value->fields_num;
+
+	value->fields[index] = entry;
+}
+
+Value* GetField(Value*value, const char* field_key) {
+	int index = GetFieldIndex(value, field_key);
+
+	if(value->fields[index])
+		return value->fields[index]->value;
+	else
+		return NULL;
 }

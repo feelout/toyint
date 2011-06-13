@@ -1,0 +1,5 @@
+begin
+	xs := array[3];
+	
+	print xs[3];
+end
