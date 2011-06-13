@@ -1,0 +1,24 @@
+begin
+	function compose(f, g, a)
+	begin
+		return f (g (a));
+	end
+
+	function func1(a)
+	begin
+		return a * 2;
+	end
+
+	function func2(a)
+	begin
+		return a * 3;
+	end
+
+	print "Composition : ";
+	print compose(func1, func2, 1);
+
+	print "Function assignment";
+	func3 := func2;
+
+	print func3(10);
+end

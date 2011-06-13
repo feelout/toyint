@@ -14,6 +14,12 @@ Value* InterpretExpression(AST* ast, Scope* scope);
 	Typecheck(right, TYPE_INTEGER); \
 	return CreateIntegralValue((left->v.integral) op (right->v.integral)) 
 
+void FailWithInvalidArgumentNumber(Value* function) {
+	fprintf(stderr, "Invalid number of arguments passed to function: expected %d\n", 
+			function->v.function.argcount);
+	exit(-1);
+}
+
 /* TODO: Do not mix coding styles */
 Value* CallFunction(AST* ast, Scope* outer_scope) {
 	int arg_num = 0;
@@ -26,10 +32,15 @@ Value* CallFunction(AST* ast, Scope* outer_scope) {
 	Value** arguments = (Value**)malloc(sizeof(Value*) * ast->value->v.function.argcount);
 
 	AST *arg;
-	/* TODO: Check for extra arguments */
 	for(arg = ast->child->child; arg; arg = arg->sibling) {
-		/* arguments[arg_num++] = arg->value; */
+		if(arg_num == function->v.function.argcount) {
+			FailWithInvalidArgumentNumber(function);
+		}
 		arguments[arg_num++] = InterpretExpression(arg, outer_scope);
+	}
+
+	if(arg_num < function->v.function.argcount) {
+		FailWithInvalidArgumentNumber(function);
 	}
 
 	/* For each formal argument, set local values from @param arguments */
@@ -45,13 +56,26 @@ Value* CallFunction(AST* ast, Scope* outer_scope) {
 	free(arguments);
 	free(local_scope);
 
-	/* TODO: Set return value */
 	return return_value; /* TODO: Add new type NONE, as in Python, return it */
 }
-/* NOTE: Return values can be passed in local scope,
- * which will be additionally examined by InterpretExpression
- * (because we are ignoring return value in InterpretStatement)
- */
+
+Value** ResolveIndex(AST* ast, Scope* scope) {
+	int id = ast->value->v.integral;
+	Value* index = InterpretExpression(ast->child, scope);
+	Typecheck(index, TYPE_INTEGER);
+
+	Value* array = GetValue(scope, id);
+	Typecheck(array, TYPE_ARRAY);
+
+	if(index->v.integral >= array->v.array.size) {
+		fprintf(stderr, "Array index out of bounds : %d out of %d", index->v.integral,
+				array->v.array.size);
+		exit(-1);
+	}
+
+	return &array->v.array.data[index->v.integral];
+}
+
 Value* InterpretExpression(AST* ast, Scope* scope) {
 	Value *left, *right, *value, *index;
 	int nvalue, id;
@@ -61,7 +85,7 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 			return GetValue(scope, ast->value->v.integral);
 		case SEM_CONSTANT:
 			return ast->value;
-		case SEM_INTREAD: // TODO: Add another read for strings
+		case SEM_INTREAD:
 			printf("INPUT : ");
 			scanf("%d", &nvalue);
 			return CreateIntegralValue(nvalue);
@@ -73,14 +97,7 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 		case SEM_ARRAY:
 			return CreateArrayValue(ast->value->v.integral);
 		case SEM_INDEX:
-			id = ast->value->v.integral;
-			index = InterpretExpression(ast->child, scope);
-			Typecheck(index, TYPE_INTEGER);
-
-			value = GetValue(scope, id);
-			Typecheck(value, TYPE_ARRAY);
-			/* TODO: Check array bounds */
-			return value->v.array.data[index->v.integral];
+			return *ResolveIndex(ast, scope);
 		case SEM_FUNCCALL:
 			return CallFunction(ast, scope);
 		case SEM_ADDITION:
@@ -122,7 +139,7 @@ void Assign(AST* ast, Scope* scope, int local) {
 	Value* value = InterpretExpression(lvalue->sibling, scope);
 
 	Value *index;
-	Value *array;
+	Value **array_element;
 
 	switch(lvalue->semantic) {
 		case SEM_ID:
@@ -132,14 +149,10 @@ void Assign(AST* ast, Scope* scope, int local) {
 				SetValue(scope, id, value);
 			break;
 		case SEM_INDEX:
-			index = InterpretExpression(lvalue->child, scope);
-			Typecheck(index, TYPE_INTEGER);
-
 			/* TODO: Mutates value directly. Work out strict semantic
 			 * for value access and modification!!!*/
-			array = GetValue(scope, id);
-			/* TODO: Check array bounds */
-			array->v.array.data[index->v.integral] = value;
+			array_element = ResolveIndex(lvalue, scope);
+			*array_element = value;
 			break;
 		default:
 			fprintf(stderr, "Invalid lvalue semantic : %d\n", lvalue->semantic);
@@ -149,7 +162,6 @@ void Assign(AST* ast, Scope* scope, int local) {
 }
 
 void InterpretStatement(AST* ast, Scope* scope) {
-	/* int id;  */
 	Value *value, *cond;
 	char* value_repr;
 	int* func_args;
@@ -157,16 +169,6 @@ void InterpretStatement(AST* ast, Scope* scope) {
 	AST* arg;
 
 	switch(ast->semantic) {
-		/*case SEM_ASSIGNMENT:
-			id = ast->child->value->v.integral;
-			value = InterpretExpression(ast->child->sibling, scope);
-			SetValue(scope, id, value);
-			break;
-		case SEM_LOCAL_ASSIGNMENT:
-			id = ast->child->value->v.integral;
-			value = InterpretExpression(ast->child->sibling, scope);
-			SetLocalValue(scope, id, value);
-			break;*/
 		case SEM_ASSIGNMENT:
 		case SEM_LOCAL_ASSIGNMENT:
 			Assign(ast, scope, ast->semantic == SEM_LOCAL_ASSIGNMENT);
