@@ -14,6 +14,7 @@ enum TokenType {
 	TOKEN_INTREAD, TOKEN_READ, TOKEN_STRING, TOKEN_FUNCTION,	/* 29 - 32 */
 	TOKEN_COMMA, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY,		/* 33 - 36 */
 	TOKEN_LEFT_SQUARE_BRACKET, TOKEN_RIGHT_SQUARE_BRACKET,		/* 37 - 38 */
+	TOKEN_DOT, TOKEN_FIELD,
 };
 
 extern char* token_name[];
@@ -40,6 +41,7 @@ typedef struct {
 	int absolute_head_position;
 	int buffer_size;
 	int line_num;
+	int field_name_following;
 } LexerState;
 
 void StartLexer(LexerState *lex, const char *filename);

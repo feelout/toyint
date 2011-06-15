@@ -76,8 +76,26 @@ Value** ResolveIndex(AST* ast, Scope* scope) {
 	return &array->v.array.data[index->v.integral];
 }
 
+static void SetObjectField(AST* ast, Scope* scope, Value* value) {
+	int id = ast->value->v.integral;
+	Value* object = GetValue(scope, id);
+	
+	Typecheck(ast->child->value, TYPE_STRING);
+
+	SetField(object, ast->child->value->v.string, value);
+}
+
+static Value* GetObjectField(AST* ast, Scope* scope) {
+	int id = ast->value->v.integral;
+	Value* object = GetValue(scope, id);
+
+	Typecheck(ast->child->value, TYPE_STRING);
+
+	return GetField(object,  ast->child->value->v.string);
+}
+
 Value* InterpretExpression(AST* ast, Scope* scope) {
-	Value *left, *right, *value, *index;
+	Value *left, *right, *value, *index, *size;
 	int nvalue, id;
 	char *read_buf;
 	switch(ast->semantic) {
@@ -95,9 +113,18 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 			scanf("%s", read_buf);
 			return CreateStringValue(read_buf);
 		case SEM_ARRAY:
-			return CreateArrayValue(ast->value->v.integral);
+			size = InterpretExpression(ast->child, scope);
+			Typecheck(size, TYPE_INTEGER);
+			return CreateArrayValue(size->v.integral);
 		case SEM_INDEX:
 			return *ResolveIndex(ast, scope);
+		case SEM_FIELD:
+			value = GetObjectField(ast, scope);
+			if(!value) {
+				fprintf(stderr, "Unknown field : %s\n", ast->child->value->v.string);
+				exit(-1);
+			}
+			return value;
 		case SEM_FUNCCALL:
 			return CallFunction(ast, scope);
 		case SEM_ADDITION:
@@ -153,6 +180,9 @@ void Assign(AST* ast, Scope* scope, int local) {
 			 * for value access and modification!!!*/
 			array_element = ResolveIndex(lvalue, scope);
 			*array_element = value;
+			break;
+		case SEM_FIELD:
+			SetObjectField(lvalue, scope, value);
 			break;
 		default:
 			fprintf(stderr, "Invalid lvalue semantic : %d\n", lvalue->semantic);

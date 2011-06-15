@@ -1,0 +1,55 @@
+begin
+	function map(f, xs)
+	begin
+		local i := 0;
+		local size := xs.length;
+
+		local result := array[size];
+
+		while i < size do
+		begin
+			result[i] := f(xs[i]);
+			i := i + 1;
+		end
+
+		return result;
+	end
+
+	function range(count)
+	begin
+		local xs := array[count];
+		local i := 0;
+
+		while i < count do
+		begin
+			xs[i] := i;
+			i := i + 1;
+		end
+
+		return xs;
+	end
+
+	function dump_array(xs)
+	begin
+		local i := 0;
+		local size := xs.length;
+
+		while i < size do
+		begin	
+			print xs[i];
+			i := i + 1;
+		end
+	end
+
+	function square(x)
+	begin
+		return x * x;
+	end
+
+	xs := range(10);
+	print "Before map : ";
+	dump_array(xs);
+
+	print "After map : ";
+	dump_array(map(square, xs));
+end

@@ -108,6 +108,8 @@ Value* CreateArrayValue(int size) {
 	value->v.array.size = size;
 	value->v.array.data = (Value**)malloc(sizeof(Value*) * size);
 
+	SetField(value, "length", CreateIntegralValue(size));
+
 	return value;
 }
 

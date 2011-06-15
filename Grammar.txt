@@ -1,9 +1,10 @@
 <program>	::= <block>
 <assignment>	::= <lvalue> := <expr> | local <id> := <expr>
-<lvalue>	::= <id> | <arrayelem>
+<lvalue>	::= <id> | <arrayelem> | <field>
 <arrayelem>	::= <id> [ <expr> ]
+<field>		::= <id> . <string>
 <expr>		::= <arithmexp> | <funccall> | <read> | <array>
-<value>		::= <number> | <id> | <arrayelem>
+<value>		::= <number> | <id> | <arrayelem> | <field>
 <number>	::= 1<number> | 2<number> | 3<number> ... | 9<number> | e
 <block>		::= begin <operatorlist> end
 <operatorlist>	::= <operator><operatorlist> | <operator>;

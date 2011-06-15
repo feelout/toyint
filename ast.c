@@ -3,11 +3,13 @@
 #include "ast.h"
 
 char* semanticToString[] = {
-	":=", "id", "const", "+", "-", "*", "/",
-	"while", "if", "call", "and", "or", "not",
-	"<", "=", ">", "<=", ">=", "print", "intread", 
-	"read", "function", "local :=", "return", 
-	"array", "[]", "<>"
+	":=", "id", "const", "+", 
+	"-", "*", "/",
+	"while", "if", "call", "and", 
+	"or", "not", "<", "=", ">", "<=", ">=", 
+	"print", "intread", "read", "function", 
+	"local :=", "return", "array", "[]", 
+	"field", "<>"
 };
 
 AST* CreateASTNode(int semantic, Value* value) {

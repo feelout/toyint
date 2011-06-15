@@ -125,8 +125,9 @@ AST* ParseOperator() {
 
 AST* ParseAssignment() {
 	Value* id;
-	int local = 0, array = 0;
+	int local = 0, array = 0, field = 0;
 	AST *indexExpr;
+	Value* field_name;
 
 	if(currentToken.type == TOKEN_LOCAL) {
 		local = 1;
@@ -139,6 +140,10 @@ AST* ParseAssignment() {
 		Match(TOKEN_LEFT_SQUARE_BRACKET);
 		indexExpr = ParseExpression();
 		Match(TOKEN_RIGHT_SQUARE_BRACKET);
+	} else if(currentToken.type == TOKEN_DOT) {
+		field = 1;
+		Match(TOKEN_DOT);
+		field_name = Match(TOKEN_FIELD);
 	}
 
 	Match(TOKEN_ASSIGNMENT);
@@ -148,6 +153,9 @@ AST* ParseAssignment() {
 	if(array) {
 		lvalueNode = CreateASTNode(SEM_INDEX, id);
 		AddASTChild(lvalueNode, indexExpr);
+	} else if(field) {
+		lvalueNode = CreateASTNode(SEM_FIELD, id);
+		AddASTChild(lvalueNode, CreateASTNode(SEM_CONSTANT, field_name));
 	} else
 		lvalueNode = CreateASTNode(SEM_ID, id);
 	AST *expr = ParseExpression();
@@ -407,6 +415,11 @@ AST* ParseValue() {
 
 			node = CreateASTNode(SEM_INDEX,  id);
 			AddASTChild(node, size);
+		} else if(currentToken.type == TOKEN_DOT) { 
+			Match(TOKEN_DOT);
+			Value* field_name = Match(TOKEN_FIELD);
+			node = CreateASTNode(SEM_FIELD, id);
+			AddASTChild(node, CreateASTNode(SEM_CONSTANT, field_name));
 		} else {
 			node =  CreateASTNode(SEM_ID, id);
 		}
@@ -430,9 +443,13 @@ AST* ParseArray() {
 	Match(TOKEN_ARRAY);
 	Match(TOKEN_LEFT_SQUARE_BRACKET);
 
-	Value* size = Match(TOKEN_NUMBER);
+	/*Value* size = Match(TOKEN_NUMBER);*/
+	AST* size_expr = ParseExpression();
 
 	Match(TOKEN_RIGHT_SQUARE_BRACKET);
 
-	return CreateASTNode(SEM_ARRAY, size);
+	AST* node = CreateASTNode(SEM_ARRAY, VALUE_EMPTY);
+	AddASTChild(node, size_expr);
+
+	return node;
 }

@@ -1,7 +1,8 @@
 begin
-	function sum(xs, size)
+	function sum(xs)
 	begin
 		local s := 0;
+		local size := xs.length;
 		local i := 0;
 		while i < size do
 		begin
@@ -16,5 +17,5 @@ begin
 	ys[1] := 15;
 	ys[2] := 20;
 
-	print sum(ys, 3);
+	print sum(ys);
 end

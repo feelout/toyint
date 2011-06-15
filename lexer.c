@@ -26,7 +26,7 @@ char* token_name[] = {
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
 	"then", "else", "EOF", "call", "print", "intread",
 	"read", "string", "function", ",", "local", "return",
-	"array", "[", "]",
+	"array", "[", "]", ".", "field"
 };
 
 /* Fails with given message */
@@ -64,6 +64,7 @@ void StartLexer(LexerState *lex, const char *filename) {
 	
 	lex->buffer_size = fread(lex->stream_buffer, sizeof(char), READ_BUF_SIZE, lex->stream);	
 	lex->line_num = 0;
+	lex->field_name_following = 0;
 }
 
 /* Get next character in the stream.*/
@@ -204,7 +205,17 @@ Token GetNextToken(LexerState *lex) {
 	int nvalue;
 	char *string_literal_buffer;
 
-	if(isalpha(c)) { /* ID or keyword */
+	if(lex->field_name_following) {
+		/* TODO: Refactor */
+		ReadIDSymbolsTillWS(lex);
+
+		string_literal_buffer = (char*)malloc(sizeof(char) * (strlen(lex->token_buffer) + 1));
+		strcpy(string_literal_buffer, lex->token_buffer);
+		token.type = TOKEN_FIELD;
+		token.value = CreateStringValue(string_literal_buffer);
+
+		lex->field_name_following = 0;
+	} else if(isalpha(c)) { /* ID or keyword */
 		ReadIDSymbolsTillWS(lex);
 
 		int kwtype = GetKeywordToken(lex->token_buffer);
@@ -259,6 +270,11 @@ Token GetNextToken(LexerState *lex) {
 			token.type = TOKEN_GTE;
 		else
 			token.type = TOKEN_GT;
+	} else if(c == '.') {
+		AdvanceHead(lex);
+
+		lex->field_name_following = 1;
+		token.type = TOKEN_DOT;
 	} else {
 
 		int i, found = 0;
