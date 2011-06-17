@@ -20,19 +20,21 @@ void FailWithInvalidArgumentNumber(Value* function) {
 	exit(-1);
 }
 
+
 /* TODO: Do not mix coding styles */
-Value* CallFunction(AST* ast, Scope* outer_scope) {
+/*Value* CallFunction(AST* ast, Scope* outer_scope, Value* owner) {*/
+Value* CallFunction(Scope* outer_scope, Value* function, AST* arglist, Value* owner) {
 	int arg_num = 0;
-	Value* function = GetValue(outer_scope, ast->value->v.integral);
+	/*Value* function = GetValue(outer_scope, ast->value->v.integral); */
 	Typecheck(function, TYPE_FUNCTION);
 
 	Scope* local_scope = CreateScope();
 	local_scope->parent = outer_scope;
 
-	Value** arguments = (Value**)malloc(sizeof(Value*) * ast->value->v.function.argcount);
+	Value** arguments = (Value**)malloc(sizeof(Value*) * function->v.function.argcount);
 
 	AST *arg;
-	for(arg = ast->child->child; arg; arg = arg->sibling) {
+	for(arg = arglist->child; arg; arg = arg->sibling) {
 		if(arg_num == function->v.function.argcount) {
 			FailWithInvalidArgumentNumber(function);
 		}
@@ -49,12 +51,14 @@ Value* CallFunction(AST* ast, Scope* outer_scope) {
 	}
 
 	SetLocalValue(local_scope, RETURN_VALUE_ID, NULL);
+	SetLocalValue(local_scope, SELF_VALUE_ID, owner);
 	InterpretAST(function->v.function.code, local_scope);
 
-	Value* return_value = GetValue(local_scope, RETURN_VALUE_ID);
+	/* Value* return_value = GetValue(local_scope, RETURN_VALUE_ID); */
+	Value* return_value = local_scope->ids[RETURN_VALUE_ID]; /* Ignoring existence check */
 
 	free(arguments);
-	free(local_scope);
+	free(local_scope); /* XXX: When refcount is implemented, simple free call will not suffice */
 
 	return return_value; /* TODO: Add new type NONE, as in Python, return it */
 }
@@ -81,6 +85,10 @@ static void SetObjectField(AST* ast, Scope* scope, Value* value) {
 	Value* object = GetValue(scope, id);
 	
 	Typecheck(ast->child->value, TYPE_STRING);
+
+	/*if(value->type == TYPE_FUNCTION) {
+		value = CreateMethod(value, object);
+	}*/
 
 	SetField(object, ast->child->value->v.string, value);
 }
@@ -126,7 +134,10 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 			}
 			return value;
 		case SEM_FUNCCALL:
-			return CallFunction(ast, scope);
+			return CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL);
+		case SEM_METHOD_CALL:
+			return CallFunction(scope, GetObjectField(ast->child, scope), ast->child->sibling, 
+					GetValue(scope, ast->child->value->v.integral));
 		case SEM_ADDITION:
 			PERFORM_OP(+);
 		case SEM_SUBTRACTION:
@@ -234,7 +245,10 @@ void InterpretStatement(AST* ast, Scope* scope) {
 			SetLocalValue(scope, ast->value->v.integral, CreateFunctionValue(func_args, arg_num, ast->child->sibling));
 			break;
 		case SEM_FUNCCALL:
-			CallFunction(ast, scope);
+			CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL);
+			break;
+		case SEM_METHOD_CALL:
+			CallFunction(scope, GetObjectField(ast->child, scope), ast->child->sibling, ast->child->value);
 			break;
 		case SEM_EMPTY:
 			InterpretAST(ast->child, scope);

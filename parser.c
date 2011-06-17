@@ -60,7 +60,15 @@ AST* ParseArray();
 
 AST* ParseFile(char* filename) {
 	StartLexer(&lex, filename);
-	return ParseProgram();
+	AST* program = ParseProgram();
+	
+	printf("ID table : \n");
+	int i;
+	for(i = 0; i < lex.id_count; ++i) {
+		printf("%d = %s\n", i, lex.id_names[i]);
+	}
+
+	return program;
 }
 
 AST* ParseProgram() {
@@ -418,8 +426,21 @@ AST* ParseValue() {
 		} else if(currentToken.type == TOKEN_DOT) { 
 			Match(TOKEN_DOT);
 			Value* field_name = Match(TOKEN_FIELD);
-			node = CreateASTNode(SEM_FIELD, id);
-			AddASTChild(node, CreateASTNode(SEM_CONSTANT, field_name));
+			if(currentToken.type == TOKEN_LEFTBRACKET) {
+				node = CreateASTNode(SEM_METHOD_CALL, VALUE_EMPTY);
+
+				AST* field_node = CreateASTNode(SEM_FIELD, id);
+				AddASTChild(field_node, CreateASTNode(SEM_CONSTANT, field_name));
+
+				AddASTChild(node, field_node);
+
+				Match(TOKEN_LEFTBRACKET);
+				AddASTChild(node, ParseArgumentList());
+				Match(TOKEN_RIGHTBRACKET);
+			} else {
+				node = CreateASTNode(SEM_FIELD, id);
+				AddASTChild(node, CreateASTNode(SEM_CONSTANT, field_name));
+			}
 		} else {
 			node =  CreateASTNode(SEM_ID, id);
 		}

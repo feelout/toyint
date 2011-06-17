@@ -1,0 +1,68 @@
+begin
+	function read_array(count)
+	begin
+		local result := array[count];
+		local i := 0;
+
+		while i < count do
+		begin
+			result[i] := intread;
+			i := i + 1;
+		end
+
+		return result;
+	end
+
+	function dump_array(xs)
+	begin
+		local i := 0;
+		local size := xs.length;
+
+		while i < size do
+		begin	
+			print xs[i];
+			i := i + 1;
+		end
+	end
+
+	function selection_sort(xs)
+	begin
+		local size := xs.length;
+
+		local sorted_border := 0;
+
+		while sorted_border < size do
+		begin
+			# NB: even though declared here, those locals
+			# are actually defined in function scope
+			local minimal_index := sorted_border;
+			local i := sorted_border;
+
+			while i < size do
+			begin
+				if xs[i] <= xs[minimal_index]
+					then minimal_index := i;	
+				i := i + 1;
+			end
+
+			local temp := xs[sorted_border];
+			xs[sorted_border] := xs[minimal_index];
+			xs[minimal_index] := temp;
+
+			sorted_border := sorted_border + 1;
+
+			print "Iteration #";
+			print sorted_border;
+			print ":";
+			dump_array(xs);
+		end
+	end
+
+	print "Enter array size : ";
+	array_size := intread;
+	print "Enter array : ";
+	xs := read_array(array_size);
+	selection_sort(xs);
+	print "Sorted : ";
+	dump_array(xs);
+end

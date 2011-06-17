@@ -55,7 +55,8 @@ void StartLexer(LexerState *lex, const char *filename) {
 	memset(lex->token_buffer, 0, sizeof(char) * MAX_TOKEN_SIZE);
 
 	lex->id_names[RETURN_VALUE_ID] = "__retvalue__";
-	lex->id_count = 0;
+	lex->id_names[SELF_VALUE_ID] = "self"; 
+	lex->id_count = 2; /* XXX: Misleading name, actually number of the last id */
 
 	lex->stream = fopen(filename, "r");
 
@@ -63,7 +64,7 @@ void StartLexer(LexerState *lex, const char *filename) {
 		fail(lex, "Failed to open an input stream");
 	
 	lex->buffer_size = fread(lex->stream_buffer, sizeof(char), READ_BUF_SIZE, lex->stream);	
-	lex->line_num = 0;
+	lex->line_num = 1;
 	lex->field_name_following = 0;
 }
 

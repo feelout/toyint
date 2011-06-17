@@ -1,0 +1,26 @@
+begin
+	xs := array[3];
+	xs[0] := 1;
+	xs[1] := 2;
+	xs[2] := 3;
+
+	function obj_sum ()
+	begin
+		print self;
+		local size := self.length;
+		local i := 0;
+		local s := 0;
+
+		while i < size do
+		begin
+			s := s + self[i];
+			i := i + 1;
+		end
+
+		return s;
+	end
+
+	xs.sum := obj_sum;
+
+	print xs.sum();
+end

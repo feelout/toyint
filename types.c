@@ -52,6 +52,9 @@ char* ValueToString(Value* value) {
 			}*/
 			strcpy(buffer, "[array]");
 			break;
+		case TYPE_FUNCTION:
+			strcpy(buffer, "[function]");
+			break;
 		default:
 			fprintf(stderr, "Invalid data type : %d\n", value->type);
 			break;
