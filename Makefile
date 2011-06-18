@@ -15,4 +15,4 @@ tokenize: tokenize.o $(OBJS)
 	gcc -g -c $*.c
 
 clean:
-	rm -rf toycmp hashtest *.o
+	rm -rf toycmp hashtest tokenize *.o

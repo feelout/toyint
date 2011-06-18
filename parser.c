@@ -131,46 +131,57 @@ AST* ParseOperator() {
 	return NULL;
 }
 
+AST* ParseArrayIndexing() {
+	Value* id = Match(TOKEN_ID);
+
+	Match(TOKEN_LEFT_SQUARE_BRACKET);
+	AST* index = ParseExpression();
+	Match(TOKEN_RIGHT_SQUARE_BRACKET);
+
+	AST* ast = CreateASTNode(SEM_INDEX, id);
+	AddASTChild(ast, index);
+
+	return ast;
+}
+
+AST* ParseField() {
+	Value* id = Match(TOKEN_ID);
+
+	Match(TOKEN_DOT);
+
+	Value* field_name = Match(TOKEN_FIELD);
+
+	AST* ast = CreateASTNode(SEM_FIELD, id);
+	AddASTChild(ast, CreateASTNode(SEM_CONSTANT, field_name));
+
+	return ast;
+}
+
 AST* ParseAssignment() {
-	Value* id;
-	int local = 0, array = 0, field = 0;
-	AST *indexExpr;
-	Value* field_name;
+	AST *lvalue;
+	enum Semantic sem = SEM_ASSIGNMENT;
 
 	if(currentToken.type == TOKEN_LOCAL) {
-		local = 1;
 		Match(TOKEN_LOCAL);
+		sem = SEM_LOCAL_ASSIGNMENT;
 	}
 
-	id = Match(TOKEN_ID);	
-	if(currentToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
-		array = 1;
-		Match(TOKEN_LEFT_SQUARE_BRACKET);
-		indexExpr = ParseExpression();
-		Match(TOKEN_RIGHT_SQUARE_BRACKET);
-	} else if(currentToken.type == TOKEN_DOT) {
-		field = 1;
-		Match(TOKEN_DOT);
-		field_name = Match(TOKEN_FIELD);
+	if(nextToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
+		lvalue = ParseArrayIndexing();
+	} else if(nextToken.type == TOKEN_DOT) {
+		lvalue = ParseField();
+	} else {
+		Value *id = Match(TOKEN_ID);
+		lvalue = CreateASTNode(SEM_ID, id);
 	}
 
 	Match(TOKEN_ASSIGNMENT);
 
-	AST *lvalueNode;
-
-	if(array) {
-		lvalueNode = CreateASTNode(SEM_INDEX, id);
-		AddASTChild(lvalueNode, indexExpr);
-	} else if(field) {
-		lvalueNode = CreateASTNode(SEM_FIELD, id);
-		AddASTChild(lvalueNode, CreateASTNode(SEM_CONSTANT, field_name));
-	} else
-		lvalueNode = CreateASTNode(SEM_ID, id);
 	AST *expr = ParseExpression();
 
-	AST *assignment = CreateASTNode(local ? SEM_LOCAL_ASSIGNMENT : SEM_ASSIGNMENT, VALUE_EMPTY);
+	AST *assignment = CreateASTNode(sem, VALUE_EMPTY);
 
-	AddASTChild(assignment, lvalueNode);
+	AddASTChild(assignment, lvalue);
 	AddASTChild(assignment, expr);
 
 	return assignment;
