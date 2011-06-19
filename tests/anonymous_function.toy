@@ -1,0 +1,8 @@
+begin
+	f := 	function ()
+			begin
+				return 5;
+			end;
+
+	print f();
+end

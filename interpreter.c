@@ -102,6 +102,19 @@ static Value* GetObjectField(AST* ast, Scope* scope) {
 	return GetField(object,  ast->child->value->v.string);
 }
 
+static Value* InterpretFunctionDefinition(AST* ast) {
+	int* func_args = (int*)malloc(sizeof(int) * MAX_FUNCTION_ARGUMENTS_COUNT);
+	int arg_num = 0;
+
+	AST* arg;
+
+	for(arg = ast->child->child; arg; arg = arg->sibling) {
+		func_args[arg_num++] = arg->value->v.integral;	
+	}
+	
+	return CreateFunctionValue(func_args, arg_num, ast->child->sibling);
+}
+
 Value* InterpretExpression(AST* ast, Scope* scope) {
 	Value *left, *right, *value, *index, *size;
 	int nvalue, id;
@@ -124,6 +137,8 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 			size = InterpretExpression(ast->child, scope);
 			Typecheck(size, TYPE_INTEGER);
 			return CreateArrayValue(size->v.integral);
+		case SEM_OBJECT:
+			return CreateObject();
 		case SEM_INDEX:
 			return *ResolveIndex(ast, scope);
 		case SEM_FIELD:
@@ -133,6 +148,8 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 				exit(-1);
 			}
 			return value;
+		case SEM_FUNCTION:
+			return InterpretFunctionDefinition(ast);
 		case SEM_FUNCCALL:
 			return CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL);
 		case SEM_METHOD_CALL:
@@ -237,12 +254,7 @@ void InterpretStatement(AST* ast, Scope* scope) {
 			SetLocalValue(scope, RETURN_VALUE_ID, InterpretExpression(ast->child, scope));
 			break;
 		case SEM_FUNCTION:
-			func_args = (int*)malloc(sizeof(int) * MAX_FUNCTION_ARGUMENTS_COUNT);
-			arg_num = 0;
-			for(arg = ast->child->child; arg; arg = arg->sibling) {
-				func_args[arg_num++] = arg->value->v.integral;	
-			}
-			SetLocalValue(scope, ast->value->v.integral, CreateFunctionValue(func_args, arg_num, ast->child->sibling));
+			SetLocalValue(scope, ast->value->v.integral, InterpretFunctionDefinition(ast));
 			break;
 		case SEM_FUNCCALL:
 			CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL);

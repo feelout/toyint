@@ -6,7 +6,7 @@
 struct AST;
 
 enum Type {
-	TYPE_INTEGER = 0, TYPE_STRING, TYPE_ARRAY, TYPE_FUNCTION,
+	TYPE_INTEGER = 0, TYPE_STRING, TYPE_ARRAY, TYPE_FUNCTION, TYPE_OBJECT
 };
 
 #define MAX_FUNCTION_ARGUMENTS_COUNT	10
@@ -44,6 +44,7 @@ Value* CreateIntegralValue(int nvalue);
 Value* CreateStringValue(char* string);
 Value* CreateFunctionValue(int* arguments, int argcount, struct AST* code);
 Value* CreateArrayValue(int size);
+Value* CreateObject();
 
 int HashString(const char* str, int table_size);
 

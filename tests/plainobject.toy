@@ -1,0 +1,14 @@
+begin
+	a := object;
+	a.a := 1;
+	a.b := 2;
+
+	function method()
+	begin
+		return self.a + self.b;
+	end
+
+	a.sum := method;
+
+	print a.sum();
+end

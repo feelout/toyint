@@ -57,6 +57,7 @@ AST* ParsePrint();
 AST* ParseFunctionDefinition();
 AST* ParseReturn();
 AST* ParseArray();
+AST* ParseObject();
 
 AST* ParseFile(char* filename) {
 	StartLexer(&lex, filename);
@@ -200,7 +201,11 @@ AST* ParsePrint() {
 
 AST* ParseFunctionDefinition() {
 	Match(TOKEN_FUNCTION);
-	Value* name = Match(TOKEN_ID);
+	Value* name = NULL;
+	if(currentToken.type == TOKEN_ID) {
+		name = Match(TOKEN_ID);
+	}
+
 	AST* function = CreateASTNode(SEM_FUNCTION, name);
 
 	Match(TOKEN_LEFTBRACKET);
@@ -359,6 +364,10 @@ AST* ParseExpression() {
 			return CreateASTNode(SEM_READ, VALUE_EMPTY);
 		case TOKEN_ARRAY:
 			return ParseArray();
+		case TOKEN_OBJECT:
+			return ParseObject();
+		case TOKEN_FUNCTION:
+			return ParseFunctionDefinition();
 		default:
 			return ParseArithmeticalExpression();
 	}
@@ -446,9 +455,7 @@ AST* ParseValue() {
 				AddASTChild(node, field_node);
 
 				Match(TOKEN_LEFTBRACKET);
-				AddASTChild(node, ParseArgumentList());
-				Match(TOKEN_RIGHTBRACKET);
-			} else {
+				AddASTChild(node, ParseArgumentList()); Match(TOKEN_RIGHTBRACKET); } else {
 				node = CreateASTNode(SEM_FIELD, id);
 				AddASTChild(node, CreateASTNode(SEM_CONSTANT, field_name));
 			}
@@ -484,4 +491,10 @@ AST* ParseArray() {
 	AddASTChild(node, size_expr);
 
 	return node;
+}
+
+AST* ParseObject() {
+	Match(TOKEN_OBJECT);
+
+	return CreateASTNode(SEM_OBJECT, VALUE_EMPTY);
 }

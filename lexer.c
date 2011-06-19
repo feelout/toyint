@@ -5,15 +5,16 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	18
+#define KEYWORD_NUM	19
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
 	"while", "do", "if", "then", "else", "call", "print", "intread", 
-	"read", "function", "local", "return", "array"};
-int keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
+	"read", "function", "local", "return", "array", "object"};
+enum TokenType keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
 	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
 	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
-	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY};
+	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY,
+	TOKEN_OBJECT};
 
 char symbols[] = {';', '=', '+', '-', '*', '/', '(', ')', '[', ']', ',', EOF_CHAR};
 enum TokenType symbol_token_types[] = {TOKEN_SEMICOLON, TOKEN_EQ, TOKEN_PLUS, TOKEN_MINUS, 
@@ -26,7 +27,7 @@ char* token_name[] = {
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
 	"then", "else", "EOF", "call", "print", "intread",
 	"read", "string", "function", ",", "local", "return",
-	"array", "[", "]", ".", "field"
+	"array", "[", "]", ".", "field", "object",
 };
 
 /* Fails with given message */

@@ -3,7 +3,8 @@
 <lvalue>	::= <id> | <arrayelem> | <field>
 <arrayelem>	::= <id> [ <expr> ]
 <field>		::= <id> . <string>
-<expr>		::= <arithmexp> | <funccall> | <read> | <array>
+<expr>		::= <arithmexp> | <funccall> | <read> | <array> | <methodcall> | <object> | <funcvalue>
+<methodcall>	::= <field> (<farglist>)
 <value>		::= <number> | <id> | <arrayelem> | <field>
 <number>	::= 1<number> | 2<number> | 3<number> ... | 9<number> | e
 <block>		::= begin <operatorlist> end
@@ -23,3 +24,5 @@
 <funcdef>	::= function <id> (<farglist>) <block>
 <return>	::= return <expr>
 <array>		::=	array [ <number> ]
+<object>	::= object
+<funcvalue>	::= function (<farglist>) <block>

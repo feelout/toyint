@@ -75,6 +75,10 @@ Value* CreateValue() {
 	return value;
 }
 
+Value* CreateObject() {
+	return CreateValue();
+}
+
 Value* CreateIntegralValue(int nvalue) {
 	Value* value = CreateValue();
 
