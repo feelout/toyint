@@ -482,7 +482,6 @@ AST* ParseArray() {
 	Match(TOKEN_ARRAY);
 	Match(TOKEN_LEFT_SQUARE_BRACKET);
 
-	/*Value* size = Match(TOKEN_NUMBER);*/
 	AST* size_expr = ParseExpression();
 
 	Match(TOKEN_RIGHT_SQUARE_BRACKET);

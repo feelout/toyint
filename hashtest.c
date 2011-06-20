@@ -1,5 +1,20 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "types.h"
+
+void DumpHash(Value* object) {
+	int i;
+	char* repr;
+
+	for(i = 0; i < object->fields_table_size; ++i) {
+		KeyValue* kv = object->fields[i];
+		if(kv) {
+			repr = ValueToString(kv->value);
+			printf("%s\t%s\n", kv->key, repr);
+			free(repr);
+		}
+	}
+}
 
 int main(int argc, char* argv[]) {
 	char buffer[100];
@@ -9,7 +24,7 @@ int main(int argc, char* argv[]) {
 	Value* field;
 
 	while(1) {
-		printf("Enter (q|g|p|h) : ");
+		printf("Enter (q|g|p|h|d) : ");
 		scanf("%c", &cmd);
 		switch(cmd) {
 			case 'q':
@@ -32,6 +47,9 @@ int main(int argc, char* argv[]) {
 				printf("Hashing\n");
 				scanf("%s", buffer);
 				printf("Hash of %s : %d\n", buffer, HashString(buffer, object->fields_table_size));
+				break;
+			case 'd':
+				DumpHash(object);
 				break;
 			default:
 				printf("Unknown command : \"%c\"\n", cmd);

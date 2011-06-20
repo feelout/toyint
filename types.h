@@ -34,7 +34,7 @@ typedef struct Value {
 } Value;
 
 typedef struct KeyValue {
-	const char* key;
+	char* key;
 	Value* value;
 } KeyValue;
 

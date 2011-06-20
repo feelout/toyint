@@ -145,15 +145,53 @@ int GetFieldIndex(Value* value, const char* field_key) {
 	return index;
 }
 
+static void Rehash(Value* value) {
+	int old_size = value->fields_table_size;
+	value->fields_table_size = old_size * 2;
+
+	KeyValue** old_fields = value->fields;
+
+	value->fields = (KeyValue**)malloc(sizeof(KeyValue*) * value->fields_table_size);
+	memset(value->fields, 0, sizeof(KeyValue*) * value->fields_table_size);
+	value->fields_num = 0;
+
+	int i, hash;
+	KeyValue* kv;
+	for(i = 0; i < old_size; ++i) {
+		kv = old_fields[i];
+
+		if(kv) {
+			SetField(value, kv->key, kv->value);
+			free(kv);
+		}
+	}
+
+	free(old_fields);
+}
+
 void SetField(Value* value, const char* field_key, Value* field_value) {
+	/* Rehash if the load factor is greater that 0.75 (XXX: Use named constant?) */
+	if(4 * value->fields_num > 3 * value->fields_table_size) {
+		Rehash(value);
+	}
 	int index = GetFieldIndex(value, field_key);
 
 	KeyValue* entry = (KeyValue*)malloc(sizeof(KeyValue));
-	entry->key = field_key;
+
+	char *key_copy = (char*)malloc(sizeof(char) * (strlen(field_key) + 1));
+	strcpy(key_copy, field_key);
+	entry->key = key_copy;
+
 	entry->value = field_value;
 
 	if(!value->fields[index])
 		++value->fields_num;
+	else if(!field_value)
+		--value->fields_num;
+	else {
+		free(value->fields[index]->key);
+		free(value->fields[index]);
+	}
 
 	value->fields[index] = entry;
 }
