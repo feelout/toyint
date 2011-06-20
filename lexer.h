@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include "types.h"
+#include "idtable.h"
 
 enum TokenType {
  	TOKEN_UNKNOWN = 0, TOKEN_BEGIN, TOKEN_END, TOKEN_ID,		/* 0 - 3 */
@@ -19,7 +20,6 @@ enum TokenType {
 
 extern char* token_name[];
 
-#define MAX_ID_NUMBER		255
 #define MAX_TOKEN_SIZE		255
 #define READ_BUF_SIZE	4096
 #define COMMENT_CHAR	'#'
@@ -32,11 +32,10 @@ typedef struct {
 } Token;
 
 typedef struct {
-	char* id_names[MAX_ID_NUMBER];
-	int id_count;
 	FILE* stream;
 	char stream_buffer[READ_BUF_SIZE];
 	char token_buffer[MAX_TOKEN_SIZE];
+	IDTable* id_table;
 	int head;
 	int absolute_head_position;
 	int buffer_size;

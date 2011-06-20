@@ -51,13 +51,15 @@ void StartLexer(LexerState *lex, const char *filename) {
 	lex->head = 0;
 	lex->absolute_head_position = 0;
 
-	memset(lex->id_names, 0, sizeof(char*) * MAX_ID_NUMBER);
+	lex->id_table = (IDTable*)malloc(sizeof(IDTable));
+
+	memset(lex->id_table->names, 0, sizeof(char*) * MAX_ID_NUMBER);
 	memset(lex->stream_buffer, 0, sizeof(char) * READ_BUF_SIZE);
 	memset(lex->token_buffer, 0, sizeof(char) * MAX_TOKEN_SIZE);
 
-	lex->id_names[RETURN_VALUE_ID] = "__retvalue__";
-	lex->id_names[SELF_VALUE_ID] = "self"; 
-	lex->id_count = 2; /* XXX: Misleading name, actually number of the last id */
+	lex->id_table->names[RETURN_VALUE_ID] = "__retvalue__";
+	lex->id_table->names[SELF_VALUE_ID] = "self"; 
+	lex->id_table->count = 2; /* XXX: Misleading name, actually number of the last id */
 
 	lex->stream = fopen(filename, "r");
 
@@ -179,17 +181,17 @@ enum TokenType GetKeywordToken(char *s) {
  * it there if necessary */
 int GetIDIndex(LexerState *lex, char *s) {
 	int n;
-	for(n = 0; n < lex->id_count; ++n) {
-		if(strcmp(s, lex->id_names[n]) == 0)
+	for(n = 0; n < lex->id_table->count; ++n) {
+		if(strcmp(s, lex->id_table->names[n]) == 0)
 			return n;
 	}
 
 	char *id_name = (char*)malloc(sizeof(char) * (strlen(s) + 1));
 	strcpy(id_name, s);
 
-	lex->id_names[lex->id_count] = id_name;
+	lex->id_table->names[lex->id_table->count] = id_name;
 
-	return lex->id_count++;
+	return lex->id_table->count++;
 }
 
 /* Yields next token */

@@ -65,8 +65,8 @@ AST* ParseFile(char* filename) {
 	
 	printf("ID table : \n");
 	int i;
-	for(i = 0; i < lex.id_count; ++i) {
-		printf("%d = %s\n", i, lex.id_names[i]);
+	for(i = 0; i < lex.id_table->count; ++i) {
+		printf("%d = %s\n", i, lex.id_table->names[i]);
 	}
 
 	return program;
