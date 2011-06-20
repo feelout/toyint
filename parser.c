@@ -3,15 +3,16 @@
 #include <assert.h>
 #include "parser.h"
 #include "lexer.h"
-#include "ast.h"
 
-LexerState lex;
-Token currentToken;
-Token nextToken;
+typedef struct {
+	LexerState* lex;
+	Token currentToken;
+	Token nextToken;
+} ParserState;
 
-void FailWithUnexpectedToken(int got, int needed) {
+void FailWithUnexpectedToken(ParserState* parser, int got, int needed) {
 	fprintf(stderr, "Unexpected token at line %d: \"%s\", needed \"%s\"\n", 
-				currentToken.line_num, token_name[got], token_name[needed]);
+				parser->currentToken.line_num, token_name[got], token_name[needed]);
 	exit(-1);
 }
 
@@ -20,124 +21,128 @@ void FailWithParsingError(char* msg) {
 	exit(-1);
 }
 
-void Advance() {
-	currentToken = nextToken;
-	if(currentToken.type != TOKEN_EOF)
-		nextToken = GetNextToken(&lex);
+void Advance(ParserState* parser) {
+	parser->currentToken = parser->nextToken;
+	if(parser->currentToken.type != TOKEN_EOF)
+		parser->nextToken = GetNextToken(parser->lex);
 }
 
-Value* Match(int expectedToken) {
-	if(currentToken.type != expectedToken) {
-		FailWithUnexpectedToken(currentToken.type, expectedToken);
+Value* Match(ParserState* parser, int expectedToken) {
+	if(parser->currentToken.type != expectedToken) {
+		FailWithUnexpectedToken(parser, parser->currentToken.type, expectedToken);
 	}
 
-	Value* value = currentToken.value;
+	Value* value = parser->currentToken.value;
 
-	Advance();
+	Advance(parser);
 
 	return value;
 }
 
-AST* ParseProgram();
-AST* ParseBlock();
-AST* ParseCondition();
-AST* ParseLogicalExpression();
-AST* ParseOperatorList();
-AST* ParseOperator();
-AST* ParseAssignment();
-AST* ParseWhileCycle();
-AST* ParseIfStatement();
-AST* ParseFunctionCall();
-AST* ParseArgumentList();
-AST* ParseExpression();
-AST* ParseArithmeticalExpression();
-AST* ParseTerm();
-AST* ParseValue();
-AST* ParsePrint();
-AST* ParseFunctionDefinition();
-AST* ParseReturn();
-AST* ParseArray();
-AST* ParseObject();
+AST* ParseProgram(ParserState* parser);
+AST* ParseBlock(ParserState* parser);
+AST* ParseCondition(ParserState* parser);
+AST* ParseLogicalExpression(ParserState* parser);
+AST* ParseOperatorList(ParserState* parser);
+AST* ParseOperator(ParserState* parser);
+AST* ParseAssignment(ParserState* parser);
+AST* ParseWhileCycle(ParserState* parser);
+AST* ParseIfStatement(ParserState* parser);
+AST* ParseFunctionCall(ParserState* parser);
+AST* ParseArgumentList(ParserState* parser);
+AST* ParseExpression(ParserState* parser);
+AST* ParseArithmeticalExpression(ParserState* parser);
+AST* ParseTerm(ParserState* parser);
+AST* ParseValue(ParserState* parser);
+AST* ParsePrint(ParserState* parser);
+AST* ParseFunctionDefinition(ParserState* parser);
+AST* ParseReturn(ParserState* parser);
+AST* ParseArray(ParserState* parser);
+AST* ParseObject(ParserState* parser);
 
 AST* ParseFile(char* filename) {
-	StartLexer(&lex, filename);
-	AST* program = ParseProgram();
+	ParserState parser;
+
+	parser.lex = (LexerState*)malloc(sizeof(LexerState));
+	StartLexer(parser.lex, filename);
+
+	AST* program = ParseProgram(&parser);
 	
 	printf("ID table : \n");
 	int i;
-	for(i = 0; i < lex.id_table->count; ++i) {
-		printf("%d = %s\n", i, lex.id_table->names[i]);
+	for(i = 0; i < parser.lex->id_table->count; ++i) {
+		printf("%d = %s\n", i, parser.lex->id_table->names[i]);
 	}
 
 	return program;
 }
 
-AST* ParseProgram() {
-	nextToken = GetNextToken(&lex);
-	Advance();
-	return ParseBlock();
+AST* ParseProgram(ParserState* parser) {
+	parser->nextToken = GetNextToken(parser->lex);
+	Advance(parser);
+	return ParseBlock(parser);
 }
 
 /* Block does not create new node */
-AST* ParseBlock() {
-	Match(TOKEN_BEGIN);
-	AST* oplist = ParseOperatorList();
-	Match(TOKEN_END);
+AST* ParseBlock(ParserState* parser) {
+	Match(parser, TOKEN_BEGIN);
+	AST* oplist = ParseOperatorList(parser);
+	Match(parser, TOKEN_END);
 
 	return oplist;
 }
 
-AST* ParseOperatorList() {
+AST* ParseOperatorList(ParserState* parser) {
 	AST *operators = CreateASTNode(SEM_EMPTY, VALUE_EMPTY);
 
-	while(currentToken.type != TOKEN_END) {
-		AST *op = ParseOperator();
+	while(parser->currentToken.type != TOKEN_END) {
+		AST *op = ParseOperator(parser);
 		AddASTChild(operators, op);
 	}
 
 	return operators;
 }
 
-AST* ParseOperator() {
+AST* ParseOperator(ParserState* parser) {
 	AST* ast;
-	switch(currentToken.type) {
+	switch(parser->currentToken.type) {
 		case TOKEN_BEGIN:
-			return ParseBlock();
+			return ParseBlock(parser);
 		case TOKEN_ID:
-			ast = nextToken.type == TOKEN_LEFTBRACKET ? ParseFunctionCall() : ParseAssignment();
-			Match(TOKEN_SEMICOLON);
+			ast = parser->nextToken.type == TOKEN_LEFTBRACKET ? ParseFunctionCall(parser) : ParseAssignment(parser);
+			Match(parser, TOKEN_SEMICOLON);
 			return ast;
 		case TOKEN_LOCAL:
-			ast = ParseAssignment();
-			Match(TOKEN_SEMICOLON);
+			ast = ParseAssignment(parser);
+			Match(parser, TOKEN_SEMICOLON);
 			return ast;
 		case TOKEN_WHILE:
-			return ParseWhileCycle();
+			return ParseWhileCycle(parser);
 		case TOKEN_IF:
-			return ParseIfStatement();
+			return ParseIfStatement(parser);
 		case TOKEN_FUNCTION:
-			return ParseFunctionDefinition();
+			return ParseFunctionDefinition(parser);
 		case TOKEN_RETURN:
-			ast = ParseReturn();
-			Match(TOKEN_SEMICOLON);
+			ast = ParseReturn(parser);
+			Match(parser, TOKEN_SEMICOLON);
 			return ast;
 		case TOKEN_PRINT:
-			ast =  ParsePrint();
-			Match(TOKEN_SEMICOLON);
+			ast =  ParsePrint(parser);
+			Match(parser, TOKEN_SEMICOLON);
 			return ast;
 	}
 
-	FailWithUnexpectedToken(currentToken.type, TOKEN_ID);
+	FailWithUnexpectedToken(parser, parser->currentToken.type, TOKEN_ID);
 
 	return NULL;
 }
 
-AST* ParseArrayIndexing() {
-	Value* id = Match(TOKEN_ID);
+AST* ParseArrayIndexing(ParserState* parser) {
+	Value* id = Match(parser, TOKEN_ID);
 
-	Match(TOKEN_LEFT_SQUARE_BRACKET);
-	AST* index = ParseExpression();
-	Match(TOKEN_RIGHT_SQUARE_BRACKET);
+	Match(parser, TOKEN_LEFT_SQUARE_BRACKET);
+	AST* index = ParseExpression(parser);
+	Match(parser, TOKEN_RIGHT_SQUARE_BRACKET);
 
 	AST* ast = CreateASTNode(SEM_INDEX, id);
 	AddASTChild(ast, index);
@@ -145,12 +150,12 @@ AST* ParseArrayIndexing() {
 	return ast;
 }
 
-AST* ParseField() {
-	Value* id = Match(TOKEN_ID);
+AST* ParseField(ParserState* parser) {
+	Value* id = Match(parser, TOKEN_ID);
 
-	Match(TOKEN_DOT);
+	Match(parser, TOKEN_DOT);
 
-	Value* field_name = Match(TOKEN_FIELD);
+	Value* field_name = Match(parser, TOKEN_FIELD);
 
 	AST* ast = CreateASTNode(SEM_FIELD, id);
 	AddASTChild(ast, CreateASTNode(SEM_CONSTANT, field_name));
@@ -158,27 +163,27 @@ AST* ParseField() {
 	return ast;
 }
 
-AST* ParseAssignment() {
+AST* ParseAssignment(ParserState* parser) {
 	AST *lvalue;
 	enum Semantic sem = SEM_ASSIGNMENT;
 
-	if(currentToken.type == TOKEN_LOCAL) {
-		Match(TOKEN_LOCAL);
+	if(parser->currentToken.type == TOKEN_LOCAL) {
+		Match(parser, TOKEN_LOCAL);
 		sem = SEM_LOCAL_ASSIGNMENT;
 	}
 
-	if(nextToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
-		lvalue = ParseArrayIndexing();
-	} else if(nextToken.type == TOKEN_DOT) {
-		lvalue = ParseField();
+	if(parser->nextToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
+		lvalue = ParseArrayIndexing(parser);
+	} else if(parser->nextToken.type == TOKEN_DOT) {
+		lvalue = ParseField(parser);
 	} else {
-		Value *id = Match(TOKEN_ID);
+		Value *id = Match(parser, TOKEN_ID);
 		lvalue = CreateASTNode(SEM_ID, id);
 	}
 
-	Match(TOKEN_ASSIGNMENT);
+	Match(parser, TOKEN_ASSIGNMENT);
 
-	AST *expr = ParseExpression();
+	AST *expr = ParseExpression(parser);
 
 	AST *assignment = CreateASTNode(sem, VALUE_EMPTY);
 
@@ -188,31 +193,31 @@ AST* ParseAssignment() {
 	return assignment;
 }
 
-AST* ParsePrint() {
-	Match(TOKEN_PRINT);
+AST* ParsePrint(ParserState* parser) {
+	Match(parser, TOKEN_PRINT);
 
 	AST* printNode = CreateASTNode(SEM_PRINT, VALUE_EMPTY);
-	AST* exprNode = ParseExpression();
+	AST* exprNode = ParseExpression(parser);
 
 	printNode->child = exprNode;
 
 	return printNode;
 }
 
-AST* ParseFunctionDefinition() {
-	Match(TOKEN_FUNCTION);
+AST* ParseFunctionDefinition(ParserState* parser) {
+	Match(parser, TOKEN_FUNCTION);
 	Value* name = NULL;
-	if(currentToken.type == TOKEN_ID) {
-		name = Match(TOKEN_ID);
+	if(parser->currentToken.type == TOKEN_ID) {
+		name = Match(parser, TOKEN_ID);
 	}
 
 	AST* function = CreateASTNode(SEM_FUNCTION, name);
 
-	Match(TOKEN_LEFTBRACKET);
-	AST* arglist = ParseArgumentList();
-	Match(TOKEN_RIGHTBRACKET);
+	Match(parser, TOKEN_LEFTBRACKET);
+	AST* arglist = ParseArgumentList(parser);
+	Match(parser, TOKEN_RIGHTBRACKET);
 
-	AST* code = ParseBlock();
+	AST* code = ParseBlock(parser);
 
 	AddASTChild(function, arglist);
 	AddASTChild(function, code);
@@ -220,16 +225,16 @@ AST* ParseFunctionDefinition() {
 	return function;
 }
 
-AST* ParseWhileCycle() {
-	Match(TOKEN_WHILE);
+AST* ParseWhileCycle(ParserState* parser) {
+	Match(parser, TOKEN_WHILE);
 
 	AST* whileNode = CreateASTNode(SEM_WHILE_CYCLE, VALUE_EMPTY);
 
-	AST* condition = ParseCondition();
+	AST* condition = ParseCondition(parser);
 	
-	Match(TOKEN_DO);
+	Match(parser, TOKEN_DO);
 
-	AST* op = ParseOperator();
+	AST* op = ParseOperator(parser);
 
 	AddASTChild(whileNode, condition);
 	AddASTChild(whileNode, op);
@@ -238,23 +243,23 @@ AST* ParseWhileCycle() {
 }
 
 /* Without priorities yet */
-AST* ParseCondition() {
-	if(currentToken.type == TOKEN_NOT) {
+AST* ParseCondition(ParserState* parser) {
+	if(parser->currentToken.type == TOKEN_NOT) {
 		AST* notCond = CreateASTNode(SEM_NOT, VALUE_EMPTY);
-		Match(TOKEN_NOT);
+		Match(parser, TOKEN_NOT);
 
-		AddASTChild(notCond, ParseLogicalExpression());
+		AddASTChild(notCond, ParseLogicalExpression(parser));
 
 		return notCond;
 	} else {
-		AST* lexp = ParseLogicalExpression();
+		AST* lexp = ParseLogicalExpression(parser);
 		AST* rhs;
 
-		enum TokenType type = currentToken.type;
+		enum TokenType type = parser->currentToken.type;
 
 		if(type == TOKEN_AND || type == TOKEN_OR) {
-			Match(type);
-			rhs = ParseCondition();
+			Match(parser, type);
+			rhs = ParseCondition(parser);
 
 			AST *log_node = CreateASTNode(type == TOKEN_AND ? SEM_AND : SEM_OR, VALUE_EMPTY);
 			AddASTChild(log_node, lexp);
@@ -267,11 +272,11 @@ AST* ParseCondition() {
 	}
 }
 
-AST* ParseLogicalExpression() {
-	AST* valueNode = ParseValue();
+AST* ParseLogicalExpression(ParserState* parser) {
+	AST* valueNode = ParseValue(parser);
 	AST* lexpNode = NULL;
 
-	switch(currentToken.type) {
+	switch(parser->currentToken.type) {
 		case TOKEN_LT:
 			lexpNode = CreateASTNode(SEM_LT, VALUE_EMPTY);
 			break;
@@ -291,9 +296,9 @@ AST* ParseLogicalExpression() {
 			return valueNode;
 	}
 
-	Advance();
+	Advance(parser);
 
-	AST* rhs = ParseValue();	
+	AST* rhs = ParseValue(parser);
 
 	AddASTChild(lexpNode, valueNode);
 	AddASTChild(lexpNode, rhs);
@@ -301,98 +306,98 @@ AST* ParseLogicalExpression() {
 	return lexpNode;
 }
 
-AST* ParseIfStatement() {
-	Match(TOKEN_IF);
+AST* ParseIfStatement(ParserState* parser) {
+	Match(parser, TOKEN_IF);
 
 	AST* ifNode = CreateASTNode(SEM_IF_STATEMENT, VALUE_EMPTY);
 
-	AST* condition = ParseCondition();
+	AST* condition = ParseCondition(parser);
 
-	Match(TOKEN_THEN);
+	Match(parser, TOKEN_THEN);
 
-	AST* thenOp = ParseOperator();
+	AST* thenOp = ParseOperator(parser);
 
 	AddASTChild(ifNode, condition);
 	AddASTChild(ifNode, thenOp);
 
-	if(currentToken.type == TOKEN_ELSE) {
-		Match(TOKEN_ELSE);
-		AST* elseOp = ParseOperator();
+	if(parser->currentToken.type == TOKEN_ELSE) {
+		Match(parser, TOKEN_ELSE);
+		AST* elseOp = ParseOperator(parser);
 		AddASTChild(ifNode, elseOp);
 	}
 
 	return ifNode;
 }
 
-AST* ParseFunctionCall() {
-	Value* funcId = Match(TOKEN_ID);
+AST* ParseFunctionCall(ParserState* parser) {
+	Value* funcId = Match(parser, TOKEN_ID);
 
 	AST* funcNode = CreateASTNode(SEM_FUNCCALL, funcId);
 
-	Match(TOKEN_LEFTBRACKET);
-	AST* arglist = ParseArgumentList();
-	Match(TOKEN_RIGHTBRACKET);
+	Match(parser, TOKEN_LEFTBRACKET);
+	AST* arglist = ParseArgumentList(parser);
+	Match(parser, TOKEN_RIGHTBRACKET);
 
 	AddASTChild(funcNode, arglist);
 
 	return funcNode;
 }
 
-AST* ParseArgumentList() {
+AST* ParseArgumentList(ParserState* parser) {
 	AST* arglist = CreateASTNode(SEM_EMPTY, VALUE_EMPTY);	
 
 	/* FIXME: At this time, ArgumentList is used both for calling
 	 * and defining functions, which is wrong as it allows using
 	 * constants as formal arguments of a function */
-	while(currentToken.type != TOKEN_RIGHTBRACKET) {
-		AST* argument = ParseValue();
+	while(parser->currentToken.type != TOKEN_RIGHTBRACKET) {
+		AST* argument = ParseValue(parser);
 		AddASTChild(arglist, argument);
-		if(currentToken.type != TOKEN_RIGHTBRACKET)
-			Match(TOKEN_COMMA);
+		if(parser->currentToken.type != TOKEN_RIGHTBRACKET)
+			Match(parser, TOKEN_COMMA);
 	}
 
 	return arglist;
 }
 
-AST* ParseExpression() {
-	switch(currentToken.type) {
+AST* ParseExpression(ParserState* parser) {
+	switch(parser->currentToken.type) {
 		case TOKEN_INTREAD:
-			Match(TOKEN_INTREAD);
+			Match(parser, TOKEN_INTREAD);
 			return CreateASTNode(SEM_INTREAD, VALUE_EMPTY);
 		case TOKEN_READ:
-			Match(TOKEN_READ);
+			Match(parser, TOKEN_READ);
 			return CreateASTNode(SEM_READ, VALUE_EMPTY);
 		case TOKEN_ARRAY:
-			return ParseArray();
+			return ParseArray(parser);
 		case TOKEN_OBJECT:
-			return ParseObject();
+			return ParseObject(parser);
 		case TOKEN_FUNCTION:
-			return ParseFunctionDefinition();
+			return ParseFunctionDefinition(parser);
 		default:
-			return ParseArithmeticalExpression();
+			return ParseArithmeticalExpression(parser);
 	}
 
 	assert(0);
 	return NULL;
 }
 
-AST* ParseArithmeticalExpression() {
-	AST* termNode = ParseTerm();
+AST* ParseArithmeticalExpression(ParserState* parser) {
+	AST* termNode = ParseTerm(parser);
 
-	if(currentToken.type == TOKEN_PLUS) {
-		Match(TOKEN_PLUS);
+	if(parser->currentToken.type == TOKEN_PLUS) {
+		Match(parser, TOKEN_PLUS);
 
 		AST* exprNode = CreateASTNode(SEM_ADDITION, VALUE_EMPTY);
 		AddASTChild(exprNode, termNode);
-		AddASTChild(exprNode, ParseArithmeticalExpression());
+		AddASTChild(exprNode, ParseArithmeticalExpression(parser));
 
 		return exprNode;
-	} else if(currentToken.type == TOKEN_MINUS) {
-		Match(TOKEN_MINUS);
+	} else if(parser->currentToken.type == TOKEN_MINUS) {
+		Match(parser, TOKEN_MINUS);
 
 		AST* exprNode = CreateASTNode(SEM_SUBTRACTION, VALUE_EMPTY);
 		AddASTChild(exprNode, termNode);
-		AddASTChild(exprNode, ParseArithmeticalExpression());
+		AddASTChild(exprNode, ParseArithmeticalExpression(parser));
 
 		return exprNode;
 	} else {
@@ -400,23 +405,23 @@ AST* ParseArithmeticalExpression() {
 	}
 }
 
-AST* ParseTerm() {
-	AST* valueNode = ParseValue();
+AST* ParseTerm(ParserState* parser) {
+	AST* valueNode = ParseValue(parser);
 
-	if(currentToken.type == TOKEN_STAR) {
-		Match(TOKEN_STAR);
+	if(parser->currentToken.type == TOKEN_STAR) {
+		Match(parser, TOKEN_STAR);
 
 		AST* exprNode = CreateASTNode(SEM_MULTIPLICATION, VALUE_EMPTY);
 		AddASTChild(exprNode, valueNode);
-		AddASTChild(exprNode, ParseTerm());
+		AddASTChild(exprNode, ParseTerm(parser));
 
 		return exprNode;
-	} else if(currentToken.type == TOKEN_SLASH) {
-		Match(TOKEN_SLASH);
+	} else if(parser->currentToken.type == TOKEN_SLASH) {
+		Match(parser, TOKEN_SLASH);
 
 		AST* exprNode = CreateASTNode(SEM_DIVISION, VALUE_EMPTY);
 		AddASTChild(exprNode, valueNode);
-		AddASTChild(exprNode, ParseTerm());
+		AddASTChild(exprNode, ParseTerm(parser));
 
 		return exprNode;
 	} else {
@@ -424,29 +429,29 @@ AST* ParseTerm() {
 	}
 }
 
-AST* ParseValue() {
+AST* ParseValue(ParserState* parser) {
 	AST* node;
-	if(currentToken.type == TOKEN_NUMBER || currentToken.type == TOKEN_STRING) {
-		node =  CreateASTNode(SEM_CONSTANT, currentToken.value);
-		Match(currentToken.type);
+	if(parser->currentToken.type == TOKEN_NUMBER || parser->currentToken.type == TOKEN_STRING) {
+		node =  CreateASTNode(SEM_CONSTANT, parser->currentToken.value);
+		Match(parser, parser->currentToken.type);
 	} else {
-		if(nextToken.type == TOKEN_LEFTBRACKET)
-			return ParseFunctionCall();
+		if(parser->nextToken.type == TOKEN_LEFTBRACKET)
+			return ParseFunctionCall(parser);
 
-		Value *id = Match(TOKEN_ID);
+		Value *id = Match(parser, TOKEN_ID);
 
 		/* XXX: Factor this out */
-		if(currentToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
-			Match(TOKEN_LEFT_SQUARE_BRACKET);
-			AST* size = ParseExpression();
-			Match(TOKEN_RIGHT_SQUARE_BRACKET);
+		if(parser->currentToken.type == TOKEN_LEFT_SQUARE_BRACKET) {
+			Match(parser, TOKEN_LEFT_SQUARE_BRACKET);
+			AST* size = ParseExpression(parser);
+			Match(parser, TOKEN_RIGHT_SQUARE_BRACKET);
 
 			node = CreateASTNode(SEM_INDEX,  id);
 			AddASTChild(node, size);
-		} else if(currentToken.type == TOKEN_DOT) { 
-			Match(TOKEN_DOT);
-			Value* field_name = Match(TOKEN_FIELD);
-			if(currentToken.type == TOKEN_LEFTBRACKET) {
+		} else if(parser->currentToken.type == TOKEN_DOT) { 
+			Match(parser, TOKEN_DOT);
+			Value* field_name = Match(parser, TOKEN_FIELD);
+			if(parser->currentToken.type == TOKEN_LEFTBRACKET) {
 				node = CreateASTNode(SEM_METHOD_CALL, VALUE_EMPTY);
 
 				AST* field_node = CreateASTNode(SEM_FIELD, id);
@@ -454,8 +459,8 @@ AST* ParseValue() {
 
 				AddASTChild(node, field_node);
 
-				Match(TOKEN_LEFTBRACKET);
-				AddASTChild(node, ParseArgumentList()); Match(TOKEN_RIGHTBRACKET); } else {
+				Match(parser, TOKEN_LEFTBRACKET);
+				AddASTChild(node, ParseArgumentList(parser)); Match(parser, TOKEN_RIGHTBRACKET); } else {
 				node = CreateASTNode(SEM_FIELD, id);
 				AddASTChild(node, CreateASTNode(SEM_CONSTANT, field_name));
 			}
@@ -467,24 +472,24 @@ AST* ParseValue() {
 	return node;
 }
 
-AST* ParseReturn() {
-	Match(TOKEN_RETURN);
+AST* ParseReturn(ParserState* parser) {
+	Match(parser, TOKEN_RETURN);
 
 	AST* node = CreateASTNode(SEM_RETURN, VALUE_EMPTY);
-	AST* ret_expr = ParseExpression();
+	AST* ret_expr = ParseExpression(parser);
 
 	AddASTChild(node, ret_expr);
 
 	return node;
 }
 
-AST* ParseArray() {
-	Match(TOKEN_ARRAY);
-	Match(TOKEN_LEFT_SQUARE_BRACKET);
+AST* ParseArray(ParserState* parser) {
+	Match(parser, TOKEN_ARRAY);
+	Match(parser, TOKEN_LEFT_SQUARE_BRACKET);
 
-	AST* size_expr = ParseExpression();
+	AST* size_expr = ParseExpression(parser);
 
-	Match(TOKEN_RIGHT_SQUARE_BRACKET);
+	Match(parser, TOKEN_RIGHT_SQUARE_BRACKET);
 
 	AST* node = CreateASTNode(SEM_ARRAY, VALUE_EMPTY);
 	AddASTChild(node, size_expr);
@@ -492,8 +497,8 @@ AST* ParseArray() {
 	return node;
 }
 
-AST* ParseObject() {
-	Match(TOKEN_OBJECT);
+AST* ParseObject(ParserState* parser) {
+	Match(parser, TOKEN_OBJECT);
 
 	return CreateASTNode(SEM_OBJECT, VALUE_EMPTY);
 }
