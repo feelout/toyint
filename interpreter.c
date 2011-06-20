@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "interpreter.h"
+#include "idtable.h"
 
 #define MAX_READ_STRING_SIZE	255
 
@@ -85,10 +86,6 @@ static void SetObjectField(AST* ast, Scope* scope, Value* value) {
 	Value* object = GetValue(scope, id);
 	
 	Typecheck(ast->child->value, TYPE_STRING);
-
-	/*if(value->type == TYPE_FUNCTION) {
-		value = CreateMethod(value, object);
-	}*/
 
 	SetField(object, ast->child->value->v.string, value);
 }

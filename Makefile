@@ -1,4 +1,4 @@
-OBJS = lexer.o ast.o parser.o scope.o interpreter.o types.o
+OBJS = lexer.o ast.o parser.o scope.o interpreter.o types.o idtable.o
 
 all: toycmp hashtest tokenize
 

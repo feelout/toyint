@@ -10,8 +10,6 @@ enum Type {
 };
 
 #define MAX_FUNCTION_ARGUMENTS_COUNT	10
-#define RETURN_VALUE_ID	0
-#define SELF_VALUE_ID 1
 
 typedef struct Value {
 	enum Type type;
