@@ -3,7 +3,8 @@
 
 #include "ast.h"
 #include "scope.h"
+#include "idtable.h"
 
-void InterpretAST(AST* ast, Scope* scope);
+void InterpretAST(AST* ast, Scope* scope, IDTable* id_table);
 
 #endif // INTERPRETER_H

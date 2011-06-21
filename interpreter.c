@@ -2,16 +2,16 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "interpreter.h"
-#include "idtable.h"
+#include "parser.h"
 
 #define MAX_READ_STRING_SIZE	255
 
-Value* InterpretExpression(AST* ast, Scope* scope);
+Value* InterpretExpression(AST* ast, Scope* scope, IDTable* id_table);
 
 #define PERFORM_OP(op) \
-	left = InterpretExpression(ast->child, scope); \
+	left = InterpretExpression(ast->child, scope, id_table); \
 	Typecheck(left, TYPE_INTEGER); \
-	right = InterpretExpression(ast->child->sibling, scope); \
+	right = InterpretExpression(ast->child->sibling, scope, id_table); \
 	Typecheck(right, TYPE_INTEGER); \
 	return CreateIntegralValue((left->v.integral) op (right->v.integral)) 
 
@@ -24,7 +24,7 @@ void FailWithInvalidArgumentNumber(Value* function) {
 
 /* TODO: Do not mix coding styles */
 /*Value* CallFunction(AST* ast, Scope* outer_scope, Value* owner) {*/
-Value* CallFunction(Scope* outer_scope, Value* function, AST* arglist, Value* owner) {
+Value* CallFunction(Scope* outer_scope, Value* function, AST* arglist, Value* owner, IDTable* id_table) {
 	int arg_num = 0;
 	/*Value* function = GetValue(outer_scope, ast->value->v.integral); */
 	Typecheck(function, TYPE_FUNCTION);
@@ -39,7 +39,7 @@ Value* CallFunction(Scope* outer_scope, Value* function, AST* arglist, Value* ow
 		if(arg_num == function->v.function.argcount) {
 			FailWithInvalidArgumentNumber(function);
 		}
-		arguments[arg_num++] = InterpretExpression(arg, outer_scope);
+		arguments[arg_num++] = InterpretExpression(arg, outer_scope, id_table);
 	}
 
 	if(arg_num < function->v.function.argcount) {
@@ -53,7 +53,7 @@ Value* CallFunction(Scope* outer_scope, Value* function, AST* arglist, Value* ow
 
 	SetLocalValue(local_scope, RETURN_VALUE_ID, NULL);
 	SetLocalValue(local_scope, SELF_VALUE_ID, owner);
-	InterpretAST(function->v.function.code, local_scope);
+	InterpretAST(function->v.function.code, local_scope, id_table);
 
 	/* Value* return_value = GetValue(local_scope, RETURN_VALUE_ID); */
 	Value* return_value = local_scope->ids[RETURN_VALUE_ID]; /* Ignoring existence check */
@@ -64,9 +64,9 @@ Value* CallFunction(Scope* outer_scope, Value* function, AST* arglist, Value* ow
 	return return_value; /* TODO: Add new type NONE, as in Python, return it */
 }
 
-Value** ResolveIndex(AST* ast, Scope* scope) {
+Value** ResolveIndex(AST* ast, Scope* scope, IDTable* id_table) {
 	int id = ast->value->v.integral;
-	Value* index = InterpretExpression(ast->child, scope);
+	Value* index = InterpretExpression(ast->child, scope, id_table);
 	Typecheck(index, TYPE_INTEGER);
 
 	Value* array = GetValue(scope, id);
@@ -112,7 +112,7 @@ static Value* InterpretFunctionDefinition(AST* ast) {
 	return CreateFunctionValue(func_args, arg_num, ast->child->sibling);
 }
 
-Value* InterpretExpression(AST* ast, Scope* scope) {
+Value* InterpretExpression(AST* ast, Scope* scope, IDTable* id_table) {
 	Value *left, *right, *value, *index, *size;
 	int nvalue, id;
 	char *read_buf;
@@ -131,13 +131,13 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 			scanf("%s", read_buf);
 			return CreateStringValue(read_buf);
 		case SEM_ARRAY:
-			size = InterpretExpression(ast->child, scope);
+			size = InterpretExpression(ast->child, scope, id_table);
 			Typecheck(size, TYPE_INTEGER);
 			return CreateArrayValue(size->v.integral);
 		case SEM_OBJECT:
 			return CreateObject();
 		case SEM_INDEX:
-			return *ResolveIndex(ast, scope);
+			return *ResolveIndex(ast, scope, id_table);
 		case SEM_FIELD:
 			value = GetObjectField(ast, scope);
 			if(!value) {
@@ -148,10 +148,10 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 		case SEM_FUNCTION:
 			return InterpretFunctionDefinition(ast);
 		case SEM_FUNCCALL:
-			return CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL);
+			return CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL, id_table);
 		case SEM_METHOD_CALL:
 			return CallFunction(scope, GetObjectField(ast->child, scope), ast->child->sibling, 
-					GetValue(scope, ast->child->value->v.integral));
+					GetValue(scope, ast->child->value->v.integral), id_table);
 		case SEM_ADDITION:
 			PERFORM_OP(+);
 		case SEM_SUBTRACTION:
@@ -165,7 +165,7 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 		case SEM_OR:
 			PERFORM_OP(||);
 		case SEM_NOT:
-			value = InterpretExpression(ast->child, scope);
+			value = InterpretExpression(ast->child, scope, id_table);
 			Typecheck(value, TYPE_INTEGER);
 			return CreateIntegralValue(!value->v.integral);
 		case SEM_LT:
@@ -184,11 +184,11 @@ Value* InterpretExpression(AST* ast, Scope* scope) {
 	}
 }
 
-void Assign(AST* ast, Scope* scope, int local) {
+void Assign(AST* ast, Scope* scope, int local, IDTable* id_table) {
 	AST* lvalue = ast->child;
 
 	int id = lvalue->value->v.integral;	
-	Value* value = InterpretExpression(lvalue->sibling, scope);
+	Value* value = InterpretExpression(lvalue->sibling, scope, id_table);
 
 	Value *index;
 	Value **array_element;
@@ -203,7 +203,7 @@ void Assign(AST* ast, Scope* scope, int local) {
 		case SEM_INDEX:
 			/* TODO: Mutates value directly. Work out strict semantic
 			 * for value access and modification!!!*/
-			array_element = ResolveIndex(lvalue, scope);
+			array_element = ResolveIndex(lvalue, scope, id_table);
 			*array_element = value;
 			break;
 		case SEM_FIELD:
@@ -216,7 +216,7 @@ void Assign(AST* ast, Scope* scope, int local) {
 	}
 }
 
-void InterpretStatement(AST* ast, Scope* scope) {
+void InterpretStatement(AST* ast, Scope* scope, IDTable* id_table) {
 	Value *value, *cond;
 	char* value_repr;
 	int* func_args;
@@ -226,41 +226,48 @@ void InterpretStatement(AST* ast, Scope* scope) {
 	switch(ast->semantic) {
 		case SEM_ASSIGNMENT:
 		case SEM_LOCAL_ASSIGNMENT:
-			Assign(ast, scope, ast->semantic == SEM_LOCAL_ASSIGNMENT);
+			Assign(ast, scope, ast->semantic == SEM_LOCAL_ASSIGNMENT, id_table);
 			break;
 		case SEM_WHILE_CYCLE:
-			while(InterpretExpression(ast->child, scope)->v.integral) {
-				InterpretStatement(ast->child->sibling, scope);
+			while(InterpretExpression(ast->child, scope, id_table)->v.integral) {
+				InterpretStatement(ast->child->sibling, scope, id_table);
 			}
 			break;
 		case SEM_IF_STATEMENT:
-			cond = InterpretExpression(ast->child, scope);
+			cond = InterpretExpression(ast->child, scope, id_table);
 			if(cond->v.integral) {
-				InterpretStatement(ast->child->sibling, scope);
+				InterpretStatement(ast->child->sibling, scope, id_table);
 			} else if(ast->child->sibling->sibling) {
-				InterpretStatement(ast->child->sibling->sibling, scope);
+				InterpretStatement(ast->child->sibling->sibling, scope, id_table);
 			}
 			break;
 		case SEM_PRINT:
-			value = InterpretExpression(ast->child, scope);
+			value = InterpretExpression(ast->child, scope, id_table);
 			value_repr = ValueToString(value);
 			printf("OUTPUT: %s\n", value_repr);
 			free(value_repr);
 			break;
 		case SEM_RETURN:
-			SetLocalValue(scope, RETURN_VALUE_ID, InterpretExpression(ast->child, scope));
+			SetLocalValue(scope, RETURN_VALUE_ID, InterpretExpression(ast->child, scope, id_table));
 			break;
 		case SEM_FUNCTION:
 			SetLocalValue(scope, ast->value->v.integral, InterpretFunctionDefinition(ast));
 			break;
 		case SEM_FUNCCALL:
-			CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL);
+			CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL, id_table);
 			break;
 		case SEM_METHOD_CALL:
-			CallFunction(scope, GetObjectField(ast->child, scope), ast->child->sibling, ast->child->value);
+			CallFunction(scope, GetObjectField(ast->child, scope), ast->child->sibling, ast->child->value, id_table);
 			break;
 		case SEM_EMPTY:
-			InterpretAST(ast->child, scope);
+			InterpretAST(ast->child, scope, id_table);
+			break;
+		case SEM_INCLUDE:
+			{
+				Value* file_name = ast->value;
+				Typecheck(file_name, TYPE_STRING);
+				InterpretAST(ParseFile(file_name->v.string, id_table), scope, id_table);
+			}
 			break;
 		default:
 			fprintf(stderr, "Interpreting error : unexpected statement semantic : %s\n", semanticToString[ast->semantic]);
@@ -268,9 +275,9 @@ void InterpretStatement(AST* ast, Scope* scope) {
 	}
 }
 
-void InterpretAST(AST* ast, Scope* scope) {
+void InterpretAST(AST* ast, Scope* scope, IDTable* id_table) {
 	AST* currentAST;
 	for(currentAST = ast; currentAST; currentAST = currentAST->sibling) {
-		InterpretStatement(currentAST, scope);
+		InterpretStatement(currentAST, scope, id_table);
 	}
 }

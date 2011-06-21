@@ -5,14 +5,15 @@
 #include "lexer.h"
 
 typedef struct {
+	char* filename;
 	LexerState* lex;
 	Token currentToken;
 	Token nextToken;
 } ParserState;
 
 void FailWithUnexpectedToken(ParserState* parser, int got, int needed) {
-	fprintf(stderr, "Unexpected token at line %d: \"%s\", needed \"%s\"\n", 
-				parser->currentToken.line_num, token_name[got], token_name[needed]);
+	fprintf(stderr, "Unexpected token at line %s:%d: \"%s\", needed \"%s\"\n", 
+				parser->filename, parser->currentToken.line_num, token_name[got], token_name[needed]);
 	exit(-1);
 }
 
@@ -59,10 +60,12 @@ AST* ParseFunctionDefinition(ParserState* parser);
 AST* ParseReturn(ParserState* parser);
 AST* ParseArray(ParserState* parser);
 AST* ParseObject(ParserState* parser);
+AST* ParseInclude(ParserState* parser);
 
 AST* ParseFile(char* filename, IDTable* id_table) {
 	ParserState parser;
 
+	parser.filename = filename;
 	parser.lex = (LexerState*)malloc(sizeof(LexerState));
 	StartLexer(parser.lex, filename, id_table);
 
@@ -132,6 +135,8 @@ AST* ParseOperator(ParserState* parser) {
 			ast =  ParsePrint(parser);
 			Match(parser, TOKEN_SEMICOLON);
 			return ast;
+		case TOKEN_INCLUDE:
+			return ParseInclude(parser);
 	}
 
 	FailWithUnexpectedToken(parser, parser->currentToken.type, TOKEN_ID);
@@ -503,4 +508,9 @@ AST* ParseObject(ParserState* parser) {
 	Match(parser, TOKEN_OBJECT);
 
 	return CreateASTNode(SEM_OBJECT, VALUE_EMPTY);
+}
+
+AST* ParseInclude(ParserState* parser) {
+	Match(parser, TOKEN_INCLUDE);
+	return CreateASTNode(SEM_INCLUDE, Match(parser, TOKEN_STRING));
 }

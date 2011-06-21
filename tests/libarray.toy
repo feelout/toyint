@@ -1,0 +1,30 @@
+begin
+	function range(start, limit)
+	begin
+		local size := limit - start;
+		local result := array[size];
+
+		local i := start;
+
+		while i < limit do
+		begin
+			result[i - start] := i;
+			i := i + 1;
+		end
+
+		return result;
+	end
+
+	function dump_array(xs)
+	begin
+		local size := xs.length;
+
+		local i := 0;
+
+		while i < size do
+		begin
+			print xs[i];
+			i := i + 1;
+		end
+	end
+end

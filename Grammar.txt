@@ -10,6 +10,7 @@
 <block>		::= begin <operatorlist> end
 <operatorlist>	::= <operator><operatorlist> | <operator>;
 <operator>	::= <block> | <assignment>; | <whilecycle> | <ifstatement>  | <funccall>; | <print>; | <funcdef> | <return>
+				| <include>
 <whilecycle>	::= while <condition> do <operator>
 <ifstatement>	::= if <condition> then <operator> else <operator> | if <condition> then <operator>
 <condition>	::= <logicalexp> | <logicalexp> and <condition> | <logicalexp> or <condition> | not <logicalexp>
@@ -26,3 +27,4 @@
 <array>		::=	array [ <number> ]
 <object>	::= object
 <funcvalue>	::= function (<farglist>) <block>
+<include>	::= include <constant>

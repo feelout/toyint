@@ -1,0 +1,16 @@
+begin
+	function map(f, xs)
+	begin
+		local size := xs.length;
+		local result := array[size];
+		local i := 0;
+
+		while i < size do
+		begin
+			result[i] := f(xs[i]);
+			i := i + 1;
+		end
+
+		return result;
+	end
+end

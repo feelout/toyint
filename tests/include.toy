@@ -1,0 +1,19 @@
+begin
+	include "tests/libfunc.toy"
+	include "tests/libarray.toy"
+
+	function square (n)
+	begin
+		return n * n;
+	end
+
+	xs := array[3];
+
+	xs[0] := 1;
+	xs[1] := 2;
+	xs[2] := 3;
+
+	ys :=  map(square, xs);
+
+	dump_array(ys);
+end

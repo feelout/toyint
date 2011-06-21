@@ -5,16 +5,16 @@
 #include "lexer.h"
 
 #define EOF_CHAR	'\0'
-#define KEYWORD_NUM	19
+#define KEYWORD_NUM	20
 
 const char *keywords[KEYWORD_NUM] = {"begin", "end", "and", "or", "not", 
 	"while", "do", "if", "then", "else", "call", "print", "intread", 
-	"read", "function", "local", "return", "array", "object"};
+	"read", "function", "local", "return", "array", "object", "include"};
 enum TokenType keyword_token_types[KEYWORD_NUM] = {TOKEN_BEGIN, TOKEN_END, TOKEN_AND, 
 	TOKEN_OR, TOKEN_NOT, TOKEN_WHILE, TOKEN_DO, TOKEN_IF,
 	TOKEN_THEN, TOKEN_ELSE, TOKEN_CALL, TOKEN_PRINT, TOKEN_INTREAD, 
 	TOKEN_READ, TOKEN_FUNCTION, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY,
-	TOKEN_OBJECT};
+	TOKEN_OBJECT, TOKEN_INCLUDE};
 
 char symbols[] = {';', '=', '+', '-', '*', '/', '(', ')', '[', ']', ',', EOF_CHAR};
 enum TokenType symbol_token_types[] = {TOKEN_SEMICOLON, TOKEN_EQ, TOKEN_PLUS, TOKEN_MINUS, 
@@ -27,7 +27,7 @@ char* token_name[] = {
 	"+", "-", "*", "/", "(", ")", "while", "do", "if",
 	"then", "else", "EOF", "call", "print", "intread",
 	"read", "string", "function", ",", "local", "return",
-	"array", "[", "]", ".", "field", "object",
+	"array", "[", "]", ".", "field", "object", "include",
 };
 
 /* Fails with given message */

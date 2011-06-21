@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 	DumpAST(ast);
 
 	Scope *scope = CreateScope();
-	InterpretAST(ast, scope);
+	InterpretAST(ast, scope, id_table);
 
 	printf("\n");
 	return 0;
