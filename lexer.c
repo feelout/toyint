@@ -46,12 +46,12 @@ void failWithInvalidSymbol(LexerState *lex, char expected, char got) {
 }
 
 /* Starts lexer on given source file */
-void StartLexer(LexerState *lex, const char *filename) {
+void StartLexer(LexerState *lex, const char *filename, IDTable *id_table) {
 	lex->stream = NULL;
 	lex->head = 0;
 	lex->absolute_head_position = 0;
 
-	lex->id_table = CreateIDTable();
+	lex->id_table = id_table;
 
 	memset(lex->stream_buffer, 0, sizeof(char) * READ_BUF_SIZE);
 	memset(lex->token_buffer, 0, sizeof(char) * MAX_TOKEN_SIZE);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "parser.h"
 #include "interpreter.h"
+#include "idtable.h"
 
 int main(int argc, char *argv[]) {
 	if(argc < 2) {
@@ -8,7 +9,9 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	AST *ast = ParseFile(argv[1]);
+	IDTable *id_table = CreateIDTable();
+
+	AST *ast = ParseFile(argv[1], id_table);
 	DumpAST(ast);
 
 	Scope *scope = CreateScope();

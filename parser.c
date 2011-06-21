@@ -60,19 +60,21 @@ AST* ParseReturn(ParserState* parser);
 AST* ParseArray(ParserState* parser);
 AST* ParseObject(ParserState* parser);
 
-AST* ParseFile(char* filename) {
+AST* ParseFile(char* filename, IDTable* id_table) {
 	ParserState parser;
 
 	parser.lex = (LexerState*)malloc(sizeof(LexerState));
-	StartLexer(parser.lex, filename);
+	StartLexer(parser.lex, filename, id_table);
 
 	AST* program = ParseProgram(&parser);
 	
 	printf("ID table : \n");
 	int i;
-	for(i = 0; i < parser.lex->id_table->count; ++i) {
-		printf("%d = %s\n", i, parser.lex->id_table->names[i]);
+	for(i = 0; i < id_table->count; ++i) {
+		printf("%d = %s\n", i, id_table->names[i]);
 	}
+
+	free(parser.lex);
 
 	return program;
 }

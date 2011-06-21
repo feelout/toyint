@@ -43,7 +43,7 @@ typedef struct {
 	int field_name_following;
 } LexerState;
 
-void StartLexer(LexerState *lex, const char *filename);
+void StartLexer(LexerState *lex, const char *filename, IDTable *id_table);
 void StopLexer(LexerState *lex);
 Token GetNextToken(LexerState *lex);
 int HasNextToken(LexerState *lex);
