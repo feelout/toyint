@@ -3,6 +3,7 @@
 #include <assert.h>
 #include "interpreter.h"
 #include "parser.h"
+#include "modules.h"
 
 #define MAX_READ_STRING_SIZE	255
 
@@ -277,7 +278,8 @@ void InterpretStatement(AST* ast, Scope* scope, IDTable* id_table) {
 			{
 				Value* file_name = ast->value;
 				Typecheck(file_name, TYPE_STRING);
-				InterpretAST(ParseFile(file_name->v.string, id_table), scope, id_table);
+				AST* module_ast = LoadModule(file_name->v.string, id_table);
+				InterpretAST(module_ast, scope, id_table);
 			}
 			break;
 		default:

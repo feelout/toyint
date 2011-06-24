@@ -1,6 +1,6 @@
 begin
-	include "tests/libfunc.toy"
-	include "tests/libarray.toy"
+	include "libfunc.toy"
+	include "libarray.toy"
 
 	function square (n)
 	begin
