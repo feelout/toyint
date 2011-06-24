@@ -377,6 +377,7 @@ AST* ParseExpression(ParserState* parser) {
 		case TOKEN_ARRAY:
 			return ParseArray(parser);
 		case TOKEN_OBJECT:
+		case TOKEN_NEW:
 			return ParseObject(parser);
 		case TOKEN_FUNCTION:
 			return ParseFunctionDefinition(parser);
@@ -505,9 +506,20 @@ AST* ParseArray(ParserState* parser) {
 }
 
 AST* ParseObject(ParserState* parser) {
-	Match(parser, TOKEN_OBJECT);
+	if(parser->currentToken.type == TOKEN_OBJECT) {
+		Match(parser, TOKEN_OBJECT);
 
-	return CreateASTNode(SEM_OBJECT, VALUE_EMPTY);
+		return CreateASTNode(SEM_OBJECT, VALUE_EMPTY);
+	} else {
+		Match(parser, TOKEN_NEW);
+
+		AST* constructor_call = ParseFunctionCall(parser);
+
+		AST* ast = CreateASTNode(SEM_NEW, VALUE_EMPTY);
+		AddASTChild(ast, constructor_call);
+
+		return ast;
+	}
 }
 
 AST* ParseInclude(ParserState* parser) {

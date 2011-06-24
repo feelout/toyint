@@ -1,0 +1,17 @@
+begin
+	function Pair (a, b)
+	begin
+		self.a := a;
+		self.b := b;
+
+		self.sum := function () begin
+			return self.a + self.b;
+		end;
+	end
+
+	p := new Pair(1, 2);
+
+	print p.a;
+	print p.b;
+	print p.sum();
+end

@@ -10,6 +10,7 @@ enum Type {
 };
 
 #define MAX_FUNCTION_ARGUMENTS_COUNT	10
+#define PROTOTYPE_VALUE_NAME			"prototype"
 
 typedef struct Value {
 	enum Type type;
@@ -48,5 +49,6 @@ int HashString(const char* str, int table_size);
 
 void SetField(Value* value, const char* field_key, Value* field_value);
 Value* GetField(Value* value, const char* field_key);
+Value* GetFieldGeneric(Value* value, const char* field_key, int check_prototype);
 
 #endif // TYPES_H

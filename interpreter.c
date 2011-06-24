@@ -149,6 +149,17 @@ Value* InterpretExpression(AST* ast, Scope* scope, IDTable* id_table) {
 			return InterpretFunctionDefinition(ast);
 		case SEM_FUNCCALL:
 			return CallFunction(scope, GetValue(scope, ast->value->v.integral), ast->child, NULL, id_table);
+		case SEM_NEW:
+			{
+				Value* object = CreateObject();
+				Value* constructor = GetValue(scope, ast->child->value->v.integral);
+
+				CallFunction(scope, constructor, ast->child->child, object, id_table);
+
+				SetField(object, PROTOTYPE_VALUE_NAME, GetFieldGeneric(constructor, PROTOTYPE_VALUE_NAME, 0));
+
+				return object;
+			}
 		case SEM_METHOD_CALL:
 			return CallFunction(scope, GetObjectField(ast->child, scope), ast->child->sibling, 
 					GetValue(scope, ast->child->value->v.integral), id_table);

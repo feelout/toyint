@@ -1,0 +1,15 @@
+begin
+	parent := object;
+
+	parent.a := "parent_a";
+	parent.b := "parent_b";
+
+	child := object;
+
+	child.prototype := parent;
+
+	child.a := "child_a";
+
+	print child.a;
+	print child.b;
+end

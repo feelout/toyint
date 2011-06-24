@@ -196,11 +196,22 @@ void SetField(Value* value, const char* field_key, Value* field_value) {
 	value->fields[index] = entry;
 }
 
-Value* GetField(Value*value, const char* field_key) {
+Value* GetFieldGeneric(Value* value, const char* field_key, int check_prototype) {
 	int index = GetFieldIndex(value, field_key);
 
 	if(value->fields[index])
 		return value->fields[index]->value;
-	else
-		return NULL;
+
+	if(check_prototype) {
+		Value* prototype = GetFieldGeneric(value, PROTOTYPE_VALUE_NAME, 0);
+
+		if(prototype)
+			return GetFieldGeneric(prototype, field_key, check_prototype);
+	}
+
+	return NULL;
+}
+
+Value* GetField(Value* value, const char* field_key) {
+	return GetFieldGeneric(value, field_key, 1);
 }

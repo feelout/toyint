@@ -1,0 +1,22 @@
+begin
+	parent := object;
+	parent.a := 1;
+	parent.b := 2;
+
+	function Child (a)
+	begin
+		self.a := a;
+
+		self.sum := function () begin
+			return self.a + self.b;
+		end;
+	end
+
+	Child.prototype := parent;
+
+	child := new Child (3);
+
+	print child.a;
+	print child.b;
+	print child.sum();
+end

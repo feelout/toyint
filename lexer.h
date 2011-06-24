@@ -16,6 +16,7 @@ enum TokenType {
 	TOKEN_COMMA, TOKEN_LOCAL, TOKEN_RETURN, TOKEN_ARRAY,		/* 33 - 36 */
 	TOKEN_LEFT_SQUARE_BRACKET, TOKEN_RIGHT_SQUARE_BRACKET,		/* 37 - 38 */
 	TOKEN_DOT, TOKEN_FIELD, TOKEN_OBJECT, TOKEN_INCLUDE,		/* 39 - 42 */
+	TOKEN_NEW,
 };
 
 extern char* token_name[];
@@ -26,9 +27,9 @@ extern char* token_name[];
 
 
 typedef struct {
-	int		type;
-	int		line_num;
-	Value*	value; /* For constants - value, for ids - index in id table */
+	enum TokenType	type;
+	int				line_num;
+	Value*			value; /* For constants - value, for ids - index in id table */
 } Token;
 
 typedef struct {

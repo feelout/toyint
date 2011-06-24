@@ -25,6 +25,6 @@
 <funcdef>	::= function <id> (<farglist>) <block>
 <return>	::= return <expr>
 <array>		::=	array [ <number> ]
-<object>	::= object
+<object>	::= object | new <funcall>
 <funcvalue>	::= function (<farglist>) <block>
 <include>	::= include <constant>
