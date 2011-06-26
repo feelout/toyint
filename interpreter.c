@@ -278,8 +278,19 @@ void InterpretStatement(AST* ast, Scope* scope, IDTable* id_table) {
 			{
 				Value* file_name = ast->value;
 				Typecheck(file_name, TYPE_STRING);
-				AST* module_ast = LoadModule(file_name->v.string, id_table);
+				AST* module_ast = IncludeModule(file_name->v.string, id_table);
 				InterpretAST(module_ast, scope, id_table);
+			}
+			break;
+		case SEM_LOAD:
+			{
+				Value* file_name = ast->value;
+				Typecheck(file_name, TYPE_STRING);
+				/* TODO: Refactor */
+				/* TODO: Use blocks to hold locals, instead of declaring
+				 * them in the beginning */
+				/* TODO: Make macro for accessing values in Value instances */
+				LoadModule(file_name->v.string, id_table, scope);
 			}
 			break;
 		default:

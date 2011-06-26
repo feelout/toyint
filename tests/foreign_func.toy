@@ -1,0 +1,5 @@
+begin
+	load "foreign_func.so";
+
+	print foreign_value;
+end

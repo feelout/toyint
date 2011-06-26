@@ -10,7 +10,7 @@ char* semanticToString[] = {
 	"print", "intread", "read", "function", 
 	"local :=", "return", "array", "[]", 
 	"field", "method_call", "object", "include",
-	"new", "<>"
+	"new", "load", "<>"
 };
 
 AST* CreateASTNode(int semantic, Value* value) {

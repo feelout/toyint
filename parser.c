@@ -61,6 +61,7 @@ AST* ParseReturn(ParserState* parser);
 AST* ParseArray(ParserState* parser);
 AST* ParseObject(ParserState* parser);
 AST* ParseInclude(ParserState* parser);
+AST* ParseLoad(ParserState* parser);
 
 AST* ParseFile(char* filename, IDTable* id_table) {
 	ParserState parser;
@@ -137,6 +138,10 @@ AST* ParseOperator(ParserState* parser) {
 			return ast;
 		case TOKEN_INCLUDE:
 			return ParseInclude(parser);
+		case TOKEN_LOAD:
+			ast = ParseLoad(parser);
+			Match(parser, TOKEN_SEMICOLON);
+			return ast; /** TODO: Factor common parts out of switch */
 	}
 
 	FailWithUnexpectedToken(parser, parser->currentToken.type, TOKEN_ID);
@@ -525,4 +530,9 @@ AST* ParseObject(ParserState* parser) {
 AST* ParseInclude(ParserState* parser) {
 	Match(parser, TOKEN_INCLUDE);
 	return CreateASTNode(SEM_INCLUDE, Match(parser, TOKEN_STRING));
+}
+
+AST* ParseLoad(ParserState* parser) {
+	Match(parser, TOKEN_LOAD);
+	return CreateASTNode(SEM_LOAD, Match(parser, TOKEN_STRING));
 }

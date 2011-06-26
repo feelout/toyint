@@ -4,13 +4,17 @@
 /* #include "ast.h" */
 
 struct AST;
+struct Scope;
 
 enum Type {
-	TYPE_INTEGER = 0, TYPE_STRING, TYPE_ARRAY, TYPE_FUNCTION, TYPE_OBJECT
+	TYPE_INTEGER = 0, TYPE_STRING, TYPE_ARRAY, TYPE_FUNCTION, TYPE_OBJECT, 
+		TYPE_FOREIGN_FUNCTION
 };
 
 #define MAX_FUNCTION_ARGUMENTS_COUNT	10
 #define PROTOTYPE_VALUE_NAME			"prototype"
+
+typedef void (*ForeignFunction)(struct Scope*);
 
 typedef struct Value {
 	enum Type type;
